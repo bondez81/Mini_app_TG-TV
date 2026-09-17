@@ -208,6 +208,25 @@ export default function App() {
   // ==================== RENDER ====================
   return (
     <div className="w-full h-full bg-[var(--tg-theme-bg-color,#0a0e14)] text-[var(--tg-theme-text-color,#e8edf2)] overflow-hidden">
+      {/* Mobile Back Button */}
+      {screen !== 'auth' && screen !== 'player' && (
+        <button
+          onClick={() => {
+            if (screen === 'chat') {
+              setScreen('home');
+              setSelectedChat(null);
+              setMedia([]);
+            } else {
+              setScreen('home');
+            }
+          }}
+          className="fixed top-4 left-4 z-50 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center active:scale-95 transition-transform"
+          aria-label="Назад"
+        >
+          <ArrowLeft size={20} className="text-white" />
+        </button>
+      )}
+
       {screen === 'auth' && (
         <AuthScreen
           onAuth={(config, userData) => {
@@ -630,7 +649,7 @@ function HomeScreen({ chats, user, onSelectChat, onOpenPlaylists, onOpenSettings
       </div>
 
       {/* Chat List */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto px-4 pb-4 scrollable">
         <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 mt-2">
           Chats & Channels
         </h2>
@@ -743,7 +762,7 @@ function ChatScreen({ chat, media, allMedia, onBack, onPlay, filter, onFilterCha
       </div>
 
       {/* Media Grid */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto px-4 pb-4 scrollable">
         <div className="grid grid-cols-2 gap-3">
           {media.map((item) => (
             <button
@@ -1048,7 +1067,7 @@ function PlaylistsScreen({ playlists, media, onToggleFavorite, onDelete, onCreat
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto p-4 scrollable">
         {playlists.length > 0 ? (
           <div className="space-y-2">
             {playlists.map(p => (
