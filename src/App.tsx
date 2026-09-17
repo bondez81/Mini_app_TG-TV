@@ -862,6 +862,83 @@ function ChatScreen({ chat, media, allMedia, onBack, onPlay, filter, onFilterCha
   );
 }
 
+// ==================== AUDIO VISUALIZER ====================
+function AudioVisualizer({ isPlaying, audioContext }: { isPlaying: boolean; audioContext: AudioContext | null }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number>();
+  const analyserRef = useRef<AnalyserNode | null>(null);
+
+  useEffect(() => {
+    if (!audioContext || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Создаём анализатор
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    analyserRef.current = analyser;
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const draw = () => {
+      animationRef.current = requestAnimationFrame(draw);
+
+      analyser.getByteFrequencyData(dataArray);
+
+      // Очистка canvas
+      ctx.fillStyle = 'rgba(10, 14, 20, 0.2)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const barWidth = (canvas.width / bufferLength) * 2.5;
+      let x = 0;
+
+      for (let i = 0; i < bufferLength; i++) {
+        const barHeight = (dataArray[i] / 255) * canvas.height;
+
+        // Градиент для каждого бара
+        const gradient = ctx.createLinearGradient(0, canvas.height - barHeight, 0, canvas.height);
+        gradient.addColorStop(0, '#667eea');
+        gradient.addColorStop(0.5, '#764ba2');
+        gradient.addColorStop(1, '#f093fb');
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+
+        x += barWidth + 1;
+      }
+    };
+
+    if (isPlaying) {
+      draw();
+    } else {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+      // Рисуем статичную визуализацию когда пауза
+      ctx.fillStyle = 'rgba(10, 14, 20, 1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [isPlaying, audioContext]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={400}
+      height={200}
+      className="w-full max-w-md h-32 rounded-2xl"
+    />
+  );
+}
+
 // ==================== PLAYER SCREEN ====================
 function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack, downloadProgress, loading }: {
   media: TgMedia & { fileName: string };
@@ -875,10 +952,52 @@ function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const oscillatorRef = useRef<OscillatorNode | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(80);
   const [isMuted, setIsMuted] = useState(false);
+
+  // Инициализация Web Audio API для демо-звука
+  useEffect(() => {
+    if (media.type === 'audio' && isPlaying) {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+
+      const ctx = audioContextRef.current;
+      
+      // Создаём осциллятор для генерации тестового звука
+      if (!oscillatorRef.current) {
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(440, ctx.currentTime); // A4 note
+        
+        gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        oscillatorRef.current = oscillator;
+        oscillator.start();
+      }
+    } else {
+      if (oscillatorRef.current) {
+        oscillatorRef.current.stop();
+        oscillatorRef.current = null;
+      }
+    }
+
+    return () => {
+      if (oscillatorRef.current) {
+        oscillatorRef.current.stop();
+        oscillatorRef.current = null;
+      }
+    };
+  }, [isPlaying, media.type]);
 
   useEffect(() => {
     const el = media.type === 'video' ? videoRef.current : audioRef.current;
@@ -955,14 +1074,21 @@ function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack
           playsInline
         />
       ) : (
-        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-[#131920] to-[#0a0e14]">
-          <div className="text-center">
-            <div className={`w-40 h-40 rounded-full bg-gradient-to-br ${getMediaColor(media.id)} mx-auto mb-6 flex items-center justify-center ${isPlaying ? 'animate-spin-slow' : ''}`}>
-              <Music size={56} className="text-white/80" />
-            </div>
-            <h3 className="text-lg font-bold px-6 truncate max-w-sm">{media.fileName}</h3>
-            <p className="text-sm text-gray-400 mt-1">{media.chatTitle}</p>
+        <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-[#131920] via-[#0a0e14] to-[#1a1a2e] p-6">
+          {/* Аудио-визуализатор */}
+          <div className="w-full max-w-md mb-8">
+            <AudioVisualizer isPlaying={isPlaying} audioContext={audioContextRef.current} />
           </div>
+
+          {/* Информация о треке */}
+          <div className="text-center mb-8">
+            <div className={`w-32 h-32 rounded-3xl ${getMediaColor(media.id)} mx-auto mb-6 flex items-center justify-center shadow-2xl`}>
+              <Music size={48} className="text-white" />
+            </div>
+            <h3 className="text-xl font-bold px-6 truncate max-w-sm mb-2">{media.fileName}</h3>
+            <p className="text-sm text-gray-400">{media.chatTitle}</p>
+          </div>
+
           <audio
             ref={audioRef}
             src={media.fileName}
