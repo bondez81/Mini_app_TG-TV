@@ -36,8 +36,8 @@ jobs:
 
     - name: Install Android SDK components
       run: |
-        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
-        yes | sdkmanager --licenses || true
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
     - name: Install npm dependencies
       run: npm install
