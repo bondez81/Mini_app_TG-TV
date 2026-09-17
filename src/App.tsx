@@ -613,6 +613,22 @@ function HomeScreen({ chats, user, onSelectChat, onOpenPlaylists, onOpenSettings
   onRefresh: () => void;
   loading: boolean;
 }) {
+  // Функция для получения градиента на основе ID
+  const getGradient = (id: string) => {
+    const gradients = [
+      'gradient-blue',
+      'gradient-purple', 
+      'gradient-green',
+      'gradient-orange',
+      'gradient-teal',
+      'gradient-pink',
+      'gradient-sunset',
+      'gradient-ocean'
+    ];
+    const index = Math.abs(id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % gradients.length;
+    return gradients[index];
+  };
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -630,27 +646,27 @@ function HomeScreen({ chats, user, onSelectChat, onOpenPlaylists, onOpenSettings
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={onRefresh} className="p-2.5 rounded-xl bg-[#131920] border border-white/5 hover:bg-[#1a2230] transition-colors">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-gray-400">
+          <button onClick={onRefresh} className="p-2.5 rounded-xl gradient-green hover:opacity-90 transition-opacity shadow-md">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-white">
               <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16" />
             </svg>
           </button>
-          <button onClick={onOpenSettings} className="p-2.5 rounded-xl bg-[#131920] border border-white/5 hover:bg-[#1a2230] transition-colors">
-            <Settings size={16} className="text-gray-400" />
+          <button onClick={onOpenSettings} className="p-2.5 rounded-xl gradient-orange hover:opacity-90 transition-opacity shadow-md">
+            <Settings size={16} className="text-white" />
           </button>
         </div>
       </header>
 
       {/* Quick Actions */}
       <div className="px-4 py-2 flex gap-2 flex-shrink-0">
-        <button onClick={onOpenPlaylists} className="flex-1 py-3 rounded-xl bg-[#131920] border border-white/5 text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#1a2230] transition-colors">
-          <List size={16} className="text-[#6C5CE7]" /> Playlists
+        <button onClick={onOpenPlaylists} className="flex-1 py-3 rounded-xl gradient-purple text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-md">
+          <List size={16} className="text-white" /> Playlists
         </button>
       </div>
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 scrollable">
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 mt-2">
+        <h2 className="text-sm font-semibold gradient-text uppercase tracking-wider mb-4 mt-2">
           Chats & Channels
         </h2>
         <div className="space-y-3">
@@ -660,13 +676,13 @@ function HomeScreen({ chats, user, onSelectChat, onOpenPlaylists, onOpenSettings
               onClick={() => onSelectChat(chat)}
               className="w-full p-4 rounded-2xl bg-[#131920] border border-white/10 flex items-center gap-4 hover:bg-[#1a2230] hover:border-[#2AABEE]/30 transition-all text-left active:scale-[0.98] shadow-lg"
             >
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2AABEE]/30 to-[#6C5CE7]/30 flex items-center justify-center flex-shrink-0 border border-white/10">
+              <div className={`w-14 h-14 rounded-2xl ${getGradient(chat.id)} flex items-center justify-center flex-shrink-0 shadow-md`}>
                 {chat.type === 'channel' ? (
-                  <Film size={22} className="text-[#2AABEE]" />
+                  <Film size={22} className="text-white" />
                 ) : chat.type === 'saved' ? (
-                  <Star size={22} className="text-[#FFD700]" />
+                  <Star size={22} className="text-white" />
                 ) : (
-                  <User size={22} className="text-[#6C5CE7]" />
+                  <User size={22} className="text-white" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -676,7 +692,11 @@ function HomeScreen({ chats, user, onSelectChat, onOpenPlaylists, onOpenSettings
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs px-3 py-1 rounded-full bg-[#2AABEE]/20 text-[#2AABEE] font-medium">
+                <span className={`text-xs px-3 py-1 rounded-full font-medium text-white shadow-sm ${
+                  chat.type === 'channel' ? 'gradient-blue' :
+                  chat.type === 'saved' ? 'gradient-orange' :
+                  'gradient-teal'
+                }`}>
                   {chat.type}
                 </span>
                 <ChevronRight size={20} className="text-gray-400" />
