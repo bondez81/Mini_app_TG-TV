@@ -106,15 +106,10 @@ public class MainActivity extends Activity {
             
             Log.i(TAG, "WebView clients configured");
             
-            // Check if assets exist
-            String assetPath = "file:///android_asset/test.html";
+            // Load the React app
+            String assetPath = "file:///android_asset/index.html";
             Log.i(TAG, "Attempting to load: " + assetPath);
-            
-            // Load test page for diagnostics
             webView.loadUrl(assetPath);
-            
-            // После подтверждения работы test.html, переключить на:
-            // String assetPath = "file:///android_asset/index.html";
             
             Log.i(TAG, "=== MainActivity onCreate Complete ===");
             
