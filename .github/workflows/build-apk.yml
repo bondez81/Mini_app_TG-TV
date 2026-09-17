@@ -29,24 +29,63 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # Android SDK is pre-installed on ubuntu-latest runners
-    # Just need to accept licenses
-    - name: Accept Android SDK licenses
+    # Debug environment
+    - name: Debug environment
       run: |
-        yes | sdkmanager --licenses || true
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        echo "=== Environment ==="
+        echo "Node: $(node --version)"
+        echo "npm: $(npm --version)"
+        echo "Java: $(java -version 2>&1 | head -1)"
+        echo "ANDROID_HOME: $ANDROID_HOME"
+        echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
+        echo ""
+        echo "=== Android SDK ==="
+        ls -la $ANDROID_HOME/ 2>/dev/null || echo "ANDROID_HOME not found"
+        ls -la $ANDROID_HOME/cmdline-tools/ 2>/dev/null || echo "No cmdline-tools"
 
-    - name: Install dependencies
-      run: npm ci
+    # Accept licenses
+    - name: Accept Android SDK licenses
+      continue-on-error: true
+      run: |
+        if [ -f "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+        fi
+
+    - name: Install npm dependencies
+      run: npm install
 
     - name: Build web app
       run: npm run build
 
+    - name: Verify build output
+      run: |
+        echo "=== Build output ==="
+        ls -la dist/
+        test -f dist/index.html && echo "✅ index.html exists" || echo "❌ index.html missing"
+
+    - name: Remove old android folder
+      run: rm -rf android
+
     - name: Add Capacitor Android platform
-      run: npx cap add android
+      run: |
+        echo "=== Adding Android platform ==="
+        npx cap add android
+        echo "=== Android platform added ==="
+        ls -la android/
 
     - name: Sync Capacitor
-      run: npx cap sync android
+      run: |
+        echo "=== Syncing Capacitor ==="
+        npx cap sync android
+        echo "=== Sync complete ==="
+
+    - name: Verify Android project structure
+      run: |
+        echo "=== Android project structure ==="
+        ls -la android/
+        ls -la android/app/ 2>/dev/null || echo "No app folder"
+        test -f android/gradlew && echo "✅ gradlew exists" || echo "❌ gradlew missing"
+        test -f android/app/build.gradle && echo "✅ build.gradle exists" || echo "❌ build.gradle missing"
 
     - name: Make gradlew executable
       run: chmod +x android/gradlew
@@ -54,14 +93,34 @@ jobs:
     - name: Build Debug APK
       if: startsWith(github.ref, 'refs/tags/') == false
       run: |
+        echo "=== Building Debug APK ==="
         cd android
-        ./gradlew assembleDebug --no-daemon
+        ./gradlew assembleDebug --no-daemon --stacktrace
+        echo "=== Build complete ==="
 
     - name: Build Release APK
       if: startsWith(github.ref, 'refs/tags/')
       run: |
+        echo "=== Building Release APK ==="
         cd android
-        ./gradlew assembleRelease --no-daemon
+        ./gradlew assembleRelease --no-daemon --stacktrace
+        echo "=== Build complete ==="
+
+    - name: Verify APK output
+      run: |
+        echo "=== Looking for APK files ==="
+        find android/app/build -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
+        
+        if [ -f "android/app/build/outputs/apk/debug/app-debug.apk" ]; then
+          echo "✅ Debug APK found!"
+          ls -lh android/app/build/outputs/apk/debug/
+        elif [ -f "android/app/build/outputs/apk/release/app-release.apk" ]; then
+          echo "✅ Release APK found!"
+          ls -lh android/app/build/outputs/apk/release/
+        else
+          echo "❌ No APK found!"
+          exit 1
+        fi
 
     - name: Upload Debug APK artifact
       if: startsWith(github.ref, 'refs/tags/') == false
@@ -94,7 +153,7 @@ jobs:
           - Android 8.0+ (API 26)
           - Android TV / Google TV / Fire TV
           
-          ### ✨ What's new
+          ### ✨ Features
           - Telegram MTProto integration
           - Video & Audio playback
           - Playlists
