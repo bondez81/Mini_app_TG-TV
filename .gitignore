@@ -4,14 +4,12 @@ node_modules/
 # Build output
 dist/
 
+# Capacitor - Android platform is generated
+android/
+
 # Capacitor
-android/local.properties
-android/.gradle/
-android/app/build/
-android/capacitor-cordova-android-plugins/
-android/build/
-android/capacitor.settings.gradle
-android/app/capacitor.build.gradle
+ios/
+capacitor-cordova-android-plugins/
 
 # IDE
 .idea/
