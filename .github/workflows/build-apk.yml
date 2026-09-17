@@ -40,13 +40,35 @@ jobs:
     - name: Build web app
       run: npm run build
 
-    - name: Copy web assets to Android
-      run: |
-        mkdir -p android/app/src/main/assets
-        cp -r dist/* android/app/src/main/assets/
-        echo "✅ Web assets copied"
-        ls -la android/app/src/main/assets/
-
+      - name: Copy web assets to Android
+        run: |
+          echo "=== Checking dist folder ==="
+          ls -la dist/
+          echo ""
+          echo "=== Creating assets directory ==="
+          mkdir -p android/app/src/main/assets
+          echo ""
+          echo "=== Copying files ==="
+          cp -r dist/* android/app/src/main/assets/
+          echo ""
+          echo "=== Copying test.html ==="
+          cp android/app/src/main/assets/test.html android/app/src/main/assets/test.html 2>/dev/null || echo "test.html already exists or will be added manually"
+          echo ""
+          echo "=== Verifying assets ==="
+          ls -la android/app/src/main/assets/
+          echo ""
+          echo "=== Checking files ==="
+          if [ -f android/app/src/main/assets/index.html ]; then
+            echo "✅ index.html exists"
+          else
+            echo "⚠️  index.html NOT FOUND (will use test.html for diagnostics)"
+          fi
+          if [ -f android/app/src/main/assets/test.html ]; then
+            echo "✅ test.html exists"
+          else
+            echo "❌ test.html NOT FOUND"
+            exit 1
+          fi
     - name: Build Debug APK
       if: startsWith(github.ref, 'refs/tags/') == false
       working-directory: android
