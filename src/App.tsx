@@ -650,36 +650,36 @@ function HomeScreen({ chats, user, onSelectChat, onOpenPlaylists, onOpenSettings
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 scrollable">
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 mt-2">
+        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 mt-2">
           Chats & Channels
         </h2>
-        <div className="space-y-1.5">
+        <div className="space-y-3">
           {chats.map((chat) => (
             <button
               key={chat.id}
               onClick={() => onSelectChat(chat)}
-              className="w-full p-3.5 rounded-xl bg-[#131920] border border-white/5 flex items-center gap-3 hover:bg-[#1a2230] hover:border-[#2AABEE]/20 transition-all text-left active:scale-[0.98]"
+              className="w-full p-4 rounded-2xl bg-[#131920] border border-white/10 flex items-center gap-4 hover:bg-[#1a2230] hover:border-[#2AABEE]/30 transition-all text-left active:scale-[0.98] shadow-lg"
             >
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#2AABEE]/20 to-[#6C5CE7]/20 flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2AABEE]/30 to-[#6C5CE7]/30 flex items-center justify-center flex-shrink-0 border border-white/10">
                 {chat.type === 'channel' ? (
-                  <Film size={18} className="text-[#2AABEE]" />
+                  <Film size={22} className="text-[#2AABEE]" />
                 ) : chat.type === 'saved' ? (
-                  <Star size={18} className="text-[#FFD700]" />
+                  <Star size={22} className="text-[#FFD700]" />
                 ) : (
-                  <User size={18} className="text-[#6C5CE7]" />
+                  <User size={22} className="text-[#6C5CE7]" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate">{chat.title}</div>
+                <div className="font-semibold text-base truncate">{chat.title}</div>
                 {chat.lastMessage && (
-                  <div className="text-xs text-gray-500 truncate mt-0.5">{chat.lastMessage}</div>
+                  <div className="text-sm text-gray-400 truncate mt-1">{chat.lastMessage}</div>
                 )}
               </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs px-2 py-0.5 rounded-full bg-white/5 text-gray-500">
+              <div className="flex items-center gap-2">
+                <span className="text-xs px-3 py-1 rounded-full bg-[#2AABEE]/20 text-[#2AABEE] font-medium">
                   {chat.type}
                 </span>
-                <ChevronRight size={16} className="text-gray-600" />
+                <ChevronRight size={20} className="text-gray-400" />
               </div>
             </button>
           ))}
