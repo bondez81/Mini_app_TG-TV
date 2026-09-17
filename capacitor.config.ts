@@ -4,6 +4,7 @@ const config: CapacitorConfig = {
   appId: 'com.teletv.player',
   appName: 'TeleTV Player',
   webDir: 'dist',
+  bundledWebRuntime: false,
   server: {
     androidScheme: 'https',
     cleartext: true
@@ -11,8 +12,7 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: true,
     captureInput: true,
-    webContentsDebuggingEnabled: false,
-    overrideUserAgent: 'TeleTV Player/1.1.0 Android'
+    webContentsDebuggingEnabled: false
   },
   plugins: {
     SplashScreen: {

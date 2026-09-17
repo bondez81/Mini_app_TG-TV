@@ -9,9 +9,6 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
-env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,20 +23,28 @@ jobs:
         node-version: '20'
         cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Build web app
-      run: npm run build
-
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
 
+    # Android SDK is pre-installed on ubuntu-latest
+    # We just need to accept licenses and ensure paths are correct
     - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
+      run: |
+        echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+        echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+        echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+        echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+        # Accept all licenses
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build web app
+      run: npm run build
 
     - name: Add Capacitor Android platform
       run: npx cap add android
