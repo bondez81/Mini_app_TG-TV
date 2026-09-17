@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import WebApp from '@twa-dev/sdk';
 import {
   Play, Pause, SkipForward, SkipBack, Volume2, VolumeX,
   Search, Settings, Home, List, Star, Music, Film, Clock,
@@ -45,22 +44,19 @@ export default function App() {
   const [downloadProgress, setDownloadProgress] = useState<{ loaded: number; total: number } | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
 
-  // Initialize Telegram WebApp
+  // Initialize app
   useEffect(() => {
+    // Try to initialize Telegram WebApp if available
     try {
-      WebApp.ready();
-      WebApp.expand();
-      WebApp.enableClosingConfirmation();
-      
-      // Set header color
-      WebApp.setHeaderColor('bg_color');
-      WebApp.setBackgroundColor('bg_color');
-      
-      setIsReady(true);
+      const w = window as any;
+      if (w.Telegram && w.Telegram.WebApp) {
+        w.Telegram.WebApp.ready();
+        w.Telegram.WebApp.expand();
+      }
     } catch (e) {
       // Not in Telegram, continue anyway
-      setIsReady(true);
     }
+    setIsReady(true);
   }, []);
 
   // Load playlists
@@ -71,7 +67,12 @@ export default function App() {
   // Notification
   const showNotification = useCallback((msg: string) => {
     setNotification(msg);
-    try { WebApp.HapticFeedback.notificationOccurred('success'); } catch {}
+    try { 
+      const w = window as any;
+      if (w.Telegram && w.Telegram.WebApp) {
+        w.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+      }
+    } catch {}
     setTimeout(() => setNotification(null), 2500);
   }, []);
 

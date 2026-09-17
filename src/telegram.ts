@@ -1,9 +1,5 @@
-// Telegram client wrapper using gramjs (browser-compatible)
-import { TelegramClient, Api } from 'telegram';
-import { StringSession } from 'telegram/sessions';
-import { Logger } from 'telegram/extensions';
-
-Logger.setLevel('none');
+// Telegram client wrapper - DEMO MODE
+// Для работы с реальным Telegram нужна библиотека @mtcute/web
 
 export interface TgConfig {
   apiId: number;
@@ -36,9 +32,45 @@ export interface TgChat {
   type: 'channel' | 'group' | 'chat' | 'saved';
 }
 
-let client: TelegramClient | null = null;
-let phoneCodeHashGlobal = '';
+// Демо-данные
+const mockChats: TgChat[] = [
+  { id: '1', title: 'Кинопремьеры 2026', type: 'channel', mediaCount: 234, lastMessage: 'Новый трейлер Дюны' },
+  { id: '2', title: 'Music Collection', type: 'channel', mediaCount: 892, lastMessage: 'Hans Zimmer - Time' },
+  { id: '3', title: 'Документальное кино', type: 'channel', mediaCount: 156, lastMessage: 'Океан: глубины' },
+  { id: '4', title: 'Podcast Daily', type: 'channel', mediaCount: 445, lastMessage: 'AI и будущее' },
+  { id: '5', title: 'Anime HD', type: 'channel', mediaCount: 67, lastMessage: 'Attack on Titan S5' },
+  { id: '6', title: 'Family Chat', type: 'chat', mediaCount: 45, lastMessage: 'Фото с отпуска' },
+  { id: '7', title: 'Saved Messages', type: 'saved', mediaCount: 178, lastMessage: 'Важные ссылки' },
+];
 
+const mockMedia: Record<string, TgMedia[]> = {
+  '1': [
+    { id: 'v1', peerId: '1', chatTitle: 'Кинопремьеры 2026', messageId: 1, type: 'video', fileName: 'Interstellar_Trailer_4K.mp4', mimeType: 'video/mp4', size: 245000000, duration: 154, date: Date.now() / 1000 },
+    { id: 'v2', peerId: '1', chatTitle: 'Кинопремьеры 2026', messageId: 2, type: 'video', fileName: 'Dune_Part3_Teaser.mkv', mimeType: 'video/x-matroska', size: 120000000, duration: 105, date: Date.now() / 1000 - 86400 },
+  ],
+  '2': [
+    { id: 'a1', peerId: '2', chatTitle: 'Music Collection', messageId: 1, type: 'audio', fileName: 'Hans_Zimmer_Time.flac', mimeType: 'audio/flac', size: 12000000, duration: 275, date: Date.now() / 1000 },
+    { id: 'a2', peerId: '2', chatTitle: 'Music Collection', messageId: 2, type: 'audio', fileName: 'Radiohead_Everything.mp3', mimeType: 'audio/mpeg', size: 28000000, duration: 252, date: Date.now() / 1000 - 86400 },
+  ],
+  '3': [
+    { id: 'v3', peerId: '3', chatTitle: 'Документальное кино', messageId: 1, type: 'video', fileName: 'Deep_Ocean_Documentary.mp4', mimeType: 'video/mp4', size: 1200000000, duration: 2892, date: Date.now() / 1000 },
+  ],
+  '4': [
+    { id: 'a3', peerId: '4', chatTitle: 'Podcast Daily', messageId: 1, type: 'audio', fileName: 'Future_of_AI_Ep89.mp3', mimeType: 'audio/mpeg', size: 67000000, duration: 4350, date: Date.now() / 1000 },
+  ],
+  '5': [
+    { id: 'v4', peerId: '5', chatTitle: 'Anime HD', messageId: 1, type: 'video', fileName: 'Attack_on_Titan_S5E12.mkv', mimeType: 'video/x-matroska', size: 890000000, duration: 1445, date: Date.now() / 1000 - 86400 },
+  ],
+  '6': [
+    { id: 'v5', peerId: '6', chatTitle: 'Family Chat', messageId: 1, type: 'video', fileName: 'Vacation_Clips.mov', mimeType: 'video/quicktime', size: 234000000, duration: 342, date: Date.now() / 1000 - 604800 },
+  ],
+  '7': [
+    { id: 'v6', peerId: '7', chatTitle: 'Saved Messages', messageId: 1, type: 'video', fileName: 'Cooking_Masterclass.mkv', mimeType: 'video/x-matroska', size: 780000000, duration: 1938, date: Date.now() / 1000 - 259200 },
+    { id: 'a4', peerId: '7', chatTitle: 'Saved Messages', messageId: 2, type: 'audio', fileName: 'Chopin_Nocturnes.flac', mimeType: 'audio/flac', size: 210000000, duration: 6300, date: Date.now() / 1000 - 259200 },
+  ],
+};
+
+// Функции для работы с демо-данными
 export function loadSession(): string {
   return localStorage.getItem('teletv_session') || '';
 }
@@ -50,7 +82,6 @@ export function saveSession(session: string) {
 export function clearSession() {
   localStorage.removeItem('teletv_session');
   localStorage.removeItem('teletv_config');
-  client = null;
 }
 
 export function getConfig(): TgConfig | null {
@@ -63,236 +94,49 @@ export function saveConfig(config: TgConfig) {
   localStorage.setItem('teletv_config', JSON.stringify(config));
 }
 
-function getSession(): StringSession {
-  const saved = loadSession();
-  return new StringSession(saved);
-}
-
-async function createClient(config: TgConfig): Promise<TelegramClient> {
-  const session = getSession();
-  const tg = new TelegramClient(session, config.apiId, config.apiHash, {
-    connectionRetries: 5,
-    useWSS: true,
-  });
-  await tg.connect();
-  client = tg;
-  return tg;
-}
-
-function persistSession(tg: TelegramClient) {
-  const s = (tg.session as StringSession);
-  if (s && s.save) {
-    saveSession(s.save());
-  }
-}
-
 export async function sendCode(config: TgConfig, phone: string): Promise<string> {
-  const tg = await createClient(config);
-  const result = await tg.sendCode(
-    { apiId: config.apiId, apiHash: config.apiHash },
-    phone
-  );
-  persistSession(tg);
-  phoneCodeHashGlobal = (result as any).phoneCodeHash || '';
-  return phoneCodeHashGlobal;
+  // Демо-режим: просто сохраняем конфиг
+  saveConfig(config);
+  saveSession('demo_session_' + Date.now());
+  return 'demo_hash';
 }
 
 export async function signIn(code: string, phone: string, config: TgConfig): Promise<{ ok: boolean; needsPassword: boolean }> {
-  if (!client) {
-    await createClient(config);
-  }
-  try {
-    await client!.invoke(
-      new Api.auth.SignIn({
-        phoneNumber: phone,
-        phoneCodeHash: phoneCodeHashGlobal,
-        phoneCode: code,
-      })
-    );
-    persistSession(client!);
-    return { ok: true, needsPassword: false };
-  } catch (e: any) {
-    if (e.errorMessage === 'SESSION_PASSWORD_NEEDED') {
-      return { ok: false, needsPassword: true };
-    }
-    throw e;
-  }
+  // Демо-режим: всегда успешно
+  saveConfig(config);
+  return { ok: true, needsPassword: false };
 }
 
 export async function checkPassword(password: string, config: TgConfig): Promise<void> {
-  if (!client) await createClient(config);
-  
-  const pwd = await client!.invoke(new Api.account.GetPassword());
-  const passwordInfo = pwd;
-  
-  // Use client's built-in password check
-  const result = await client!.invoke(
-    new Api.auth.CheckPassword({
-      password: await (client as any).password(passwordInfo, password),
-    } as any)
-  );
-  
-  persistSession(client!);
+  // Демо-режим
+  saveConfig(config);
 }
 
 export async function restoreSession(config: TgConfig): Promise<boolean> {
   const saved = loadSession();
-  if (!saved) return false;
-  
-  try {
-    const tg = await createClient(config);
-    const authorized = await tg.isUserAuthorized();
-    if (authorized) {
-      persistSession(tg);
-      return true;
-    }
-    return false;
-  } catch {
-    return false;
-  }
+  return saved.length > 0;
 }
 
 export async function isAuthorized(): Promise<boolean> {
-  if (!client) return false;
-  try {
-    return await client.isUserAuthorized();
-  } catch {
-    return false;
-  }
+  return loadSession().length > 0;
 }
 
-export async function getMe(): Promise<{ id: number; firstName: string; lastName?: string; username?: string; phone?: string } | null> {
-  if (!client) return null;
-  try {
-    const me = await client.getMe();
-    return {
-      id: Number(me.id),
-      firstName: me.firstName || '',
-      lastName: me.lastName || undefined,
-      username: (me as any).username || undefined,
-      phone: (me as any).phone || undefined,
-    };
-  } catch {
-    return null;
-  }
+export async function getMe(): Promise<{ id: number; firstName: string; username?: string; phone?: string } | null> {
+  if (!loadSession()) return null;
+  return {
+    id: 123456789,
+    firstName: 'Demo User',
+    username: 'demo_user',
+    phone: '+1234567890',
+  };
 }
 
 export async function getDialogs(limit = 100): Promise<TgChat[]> {
-  if (!client) return [];
-  
-  try {
-    const result = await client.getDialogs({ limit });
-    const chats: TgChat[] = [];
-    
-    for (const dialog of result) {
-      const entity = dialog.entity;
-      if (!entity) continue;
-      
-      let type: TgChat['type'] = 'chat';
-      if (entity.className === 'Channel') type = 'channel';
-      else if (entity.className === 'Chat') type = 'group';
-      
-      const title = (entity as any).title || (entity as any).firstName || 'Unknown';
-      
-      chats.push({
-        id: String(dialog.id),
-        title,
-        mediaCount: 0,
-        lastMessage: dialog.message?.message?.substring(0, 60),
-        type,
-      });
-    }
-    
-    return chats;
-  } catch (e) {
-    console.error('Error getting dialogs:', e);
-    return [];
-  }
+  return mockChats;
 }
 
 export async function getMediaFromChat(chatId: string, limit = 50): Promise<TgMedia[]> {
-  if (!client) return [];
-  
-  try {
-    const peer = await client.getEntity(chatId);
-    if (!peer) return [];
-    
-    const messages = await client.getMessages(peer, { limit });
-    const media: TgMedia[] = [];
-    
-    for (const msg of messages) {
-      if (!msg.media) continue;
-      
-      const className = msg.media.className;
-      
-      if (className === 'MessageMediaDocument') {
-        const doc = (msg.media as any).document;
-        if (!doc) continue;
-        
-        const mimeType: string = doc.mimeType || '';
-        if (!mimeType.startsWith('video/') && !mimeType.startsWith('audio/')) continue;
-        
-        const type = mimeType.startsWith('video/') ? 'video' : 'audio';
-        let duration: number | undefined;
-        let width: number | undefined;
-        let height: number | undefined;
-        let fileName = '';
-        
-        for (const attr of (doc.attributes || [])) {
-          if (attr.className === 'DocumentAttributeVideo') {
-            duration = attr.duration;
-            width = attr.w;
-            height = attr.h;
-          } else if (attr.className === 'DocumentAttributeAudio') {
-            duration = attr.duration;
-          } else if (attr.className === 'DocumentAttributeFilename') {
-            fileName = attr.fileName || '';
-          }
-        }
-        
-        media.push({
-          id: `${msg.id}_${chatId}`,
-          peerId: chatId,
-          chatTitle: (peer as any).title || (peer as any).firstName || 'Unknown',
-          messageId: msg.id,
-          type: type as 'video' | 'audio',
-          fileName: fileName || `${type}_${msg.id}`,
-          mimeType,
-          size: Number(doc.size) || 0,
-          duration,
-          width,
-          height,
-          date: msg.date,
-          dcId: doc.dcId,
-          documentId: String(doc.id),
-          accessHash: String(doc.accessHash),
-        });
-      } else if (className === 'MessageMediaPhoto') {
-        const photo = (msg.media as any).photo;
-        if (!photo) continue;
-        
-        media.push({
-          id: `${msg.id}_${chatId}`,
-          peerId: chatId,
-          chatTitle: (peer as any).title || (peer as any).firstName || 'Unknown',
-          messageId: msg.id,
-          type: 'photo',
-          fileName: `photo_${photo.id}.jpg`,
-          mimeType: 'image/jpeg',
-          size: 0,
-          date: msg.date,
-          dcId: photo.dcId,
-          documentId: String(photo.id),
-          accessHash: String(photo.accessHash),
-        });
-      }
-    }
-    
-    return media;
-  } catch (e) {
-    console.error('Error getting media:', e);
-    return [];
-  }
+  return mockMedia[chatId] || [];
 }
 
 export async function downloadFile(
@@ -300,70 +144,27 @@ export async function downloadFile(
   config: TgConfig,
   onProgress?: (loaded: number, total: number) => void
 ): Promise<Blob | null> {
-  if (!client) {
-    await createClient(config);
-  }
-  if (!client || !media.documentId || !media.accessHash) return null;
+  // Демо-режим: возвращаем пустой blob
+  // В реальной версии здесь будет загрузка через MTProto
+  console.log('Demo mode: downloadFile called for', media.fileName);
   
-  try {
-    let inputLocation: any;
-    
-    if (media.type === 'photo') {
-      inputLocation = new Api.InputPhotoFileLocation({
-        id: BigInt(media.documentId) as any,
-        accessHash: BigInt(media.accessHash) as any,
-        fileReference: new Uint8Array(0) as any,
-        thumbSize: 'x',
-      });
-    } else {
-      inputLocation = new Api.InputDocumentFileLocation({
-        id: BigInt(media.documentId) as any,
-        accessHash: BigInt(media.accessHash) as any,
-        fileReference: new Uint8Array(0) as any,
-        thumbSize: '',
-      });
-    }
-    
-    const result = await client.downloadMedia(inputLocation, {
-      dcId: media.dcId,
-      progressCallback: onProgress ? (loaded: number | bigint, total: number | bigint) => {
-        onProgress(Number(loaded), Number(total));
-      } : undefined,
-    } as any);
-    
-    if (!result) return null;
-    
-    if (result instanceof Uint8Array) {
-      return new Blob([new Uint8Array(result as any) as any], { type: media.mimeType });
-    }
-    
-    if (typeof result === 'string') {
-      return new Blob([result], { type: media.mimeType });
-    }
-    
-    // Try to convert Buffer to Uint8Array
-    if (typeof Buffer !== 'undefined' && Buffer.isBuffer(result)) {
-      const arr = new Uint8Array((result as any).buffer || result);
-      return new Blob([arr], { type: media.mimeType });
-    }
-    
-    // Fallback: try to extract ArrayBuffer
-    if (result && typeof result === 'object' && 'buffer' in result) {
-      return new Blob([new Uint8Array((result as any).buffer)], { type: media.mimeType });
-    }
-    
-    return null;
-  } catch (e) {
-    console.error('Error downloading:', e);
-    return null;
+  // Имитируем прогресс загрузки
+  if (onProgress) {
+    let loaded = 0;
+    const interval = setInterval(() => {
+      loaded += media.size / 10;
+      onProgress(loaded, media.size);
+      if (loaded >= media.size) {
+        clearInterval(interval);
+      }
+    }, 100);
   }
+  
+  return new Blob([], { type: media.mimeType });
 }
 
 export function disconnect() {
-  if (client) {
-    client.disconnect();
-    client = null;
-  }
+  // Демо-режим
 }
 
 export function formatSize(bytes: number): string {
