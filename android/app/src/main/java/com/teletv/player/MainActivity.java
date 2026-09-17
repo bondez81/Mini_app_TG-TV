@@ -129,16 +129,13 @@ public class MainActivity extends Activity {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         // Handle back button - send message to WebView for app navigation
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            // Execute JavaScript to navigate back in the app
-            webView.evaluateJavascript(
-                "if (window.history.length > 1) { window.history.back(); true; } else { false; }",
-                value -> {
-                    if ("false".equals(String.valueOf(value))) {
-                        // No more history, close app
-                        finish();
-                    }
-                }
-            );
+            if (webView != null && webView.canGoBack()) {
+                // WebView has history - go back
+                webView.goBack();
+            } else {
+                // No more history - close app
+                finish();
+            }
             return true;
         }
         return super.onKeyDown(keyCode, event);
