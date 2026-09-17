@@ -132,13 +132,11 @@ public class MainActivity extends Activity {
             // Execute JavaScript to navigate back in the app
             webView.evaluateJavascript(
                 "if (window.history.length > 1) { window.history.back(); true; } else { false; }",
-                null,
                 value -> {
                     if ("false".equals(String.valueOf(value))) {
                         // No more history, close app
                         finish();
                     }
-                    return null;
                 }
             );
             return true;
