@@ -14,17 +14,21 @@ export default defineConfig({
       },
     }),
   ],
-  base: './', // Относительные пути для WebView
+  base: './',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    target: 'es2015', // Совместимость со старыми WebView
-    // Убираем хеши из имён файлов
+    target: 'es2015',
     rollupOptions: {
       output: {
         entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/[name].js',
-        assetFileNames: 'assets/[name].[ext]'
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name && assetInfo.name.endsWith('.css')) {
+            return 'assets/[name].css';
+          }
+          return 'assets/[name].[ext]';
+        }
       }
     }
   },
