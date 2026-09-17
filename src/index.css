@@ -1,1 +1,103 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-primary: #0088cc;
+    --color-primary-light: #33b5e5;
+    --color-accent: #7c4dff;
+    --color-surface: #0f1419;
+    --color-surface-light: #1a2332;
+    --color-text: #e8edf2;
+    --color-text-muted: #8899aa;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #334155 #0f1419;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+}
+
+@layer components {
+  .gradient-text {
+    background: linear-gradient(135deg, #0088cc, #7c4dff, #00c9a7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glass-card {
+    background: rgba(26, 35, 50, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 40px rgba(0, 136, 204, 0.15), 0 0 80px rgba(0, 136, 204, 0.05);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 40px rgba(124, 77, 255, 0.15), 0 0 80px rgba(124, 77, 255, 0.05);
+  }
+
+  .hero-gradient {
+    background: radial-gradient(ellipse at 50% 0%, rgba(0, 136, 204, 0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, rgba(124, 77, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 20% 80%, rgba(0, 201, 167, 0.06) 0%, transparent 40%);
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float 6s ease-in-out 2s infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 4s ease-in-out infinite;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.8s ease-out forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 1s ease-out forwards;
+    opacity: 0;
+  }
+
+  .timeline-line {
+    background: linear-gradient(to bottom, #0088cc, #7c4dff, #00c9a7);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
