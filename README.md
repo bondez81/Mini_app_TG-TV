@@ -100,14 +100,13 @@ npm install
 # 3. Соберите веб-приложение
 npm run build
 
-# 4. Добавьте Android платформу (создаст папку android/)
-npx cap add android
+# 4. Скопируйте веб-ассеты в Android
+mkdir -p android/app/src/main/assets
+cp -r dist/* android/app/src/main/assets/
 
-# 5. Синхронизируйте файлы
-npx cap sync android
-
-# 6. Соберите APK
+# 5. Соберите APK
 cd android
+chmod +x gradlew
 ./gradlew assembleDebug
 
 # APK будет в android/app/build/outputs/apk/debug/
@@ -129,16 +128,22 @@ teletv-player/
 │   ├── App.tsx            # Главный компонент
 │   ├── telegram.ts        # Telegram MTProto клиент (gramjs)
 │   └── index.css          # Стили
+├── android/               # Android проект (WebView)
+│   ├── app/
+│   │   └── src/main/
+│   │       ├── AndroidManifest.xml
+│   │       ├── java/com/teletv/player/
+│   │       │   └── MainActivity.java
+│   │       └── assets/    # Веб-приложение (копируется из dist/)
+│   ├── build.gradle
+│   └── gradlew
 ├── .github/
 │   └── workflows/
 │       └── build-apk.yml  # CI/CD для сборки APK
-├── capacitor.config.ts    # Конфигурация Capacitor
 ├── build-android.sh       # Скрипт локальной сборки
 ├── package.json
 └── README.md
 ```
-
-> **Примечание:** Папка `android/` не коммитится в Git. Она создаётся автоматически через `npx cap add android`.
 
 ---
 
@@ -149,8 +154,8 @@ teletv-player/
 | UI Framework | React 18 + TypeScript |
 | Стилизация | Tailwind CSS |
 | Telegram API | gramjs (MTProto 2.0) |
-| Обёртка | Capacitor |
-| Сборка | Vite |
+| Android | Нативный WebView |
+| Сборка | Vite + Gradle |
 | CI/CD | GitHub Actions |
 | Мин. Android | 8.0 (API 26) |
 
@@ -174,7 +179,7 @@ teletv-player/
 При каждом push в `main` GitHub Actions автоматически:
 1. Устанавливает зависимости
 2. Собирает веб-приложение
-3. Добавляет Android платформу через Capacitor
+3. Копирует веб-ассеты в Android проект
 4. Собирает Debug APK
 5. Загружает в Artifacts
 

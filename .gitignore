@@ -4,12 +4,8 @@ node_modules/
 # Build output
 dist/
 
-# Capacitor - Android platform is generated
-android/
-
-# Capacitor
-ios/
-capacitor-cordova-android-plugins/
+# Capacitor (no longer used)
+# android/
 
 # IDE
 .idea/
@@ -35,5 +31,11 @@ npm-debug.log*
 *.keystore
 *.jks
 keystore.properties
+
+# Gradle build outputs (but keep source)
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
 .next/
 build/

@@ -38,17 +38,11 @@ npm install
 echo "🌐 Building web app..."
 npm run build
 
-# Check if Android platform exists
-if [ ! -d "android" ]; then
-    echo "📱 Adding Android platform..."
-    npx cap add android
-else
-    echo "✅ Android platform already exists"
-fi
-
-# Sync Capacitor
-echo "🔄 Syncing Capacitor..."
-npx cap sync android
+# Copy web assets to Android
+echo "📂 Copying web assets to Android..."
+mkdir -p android/app/src/main/assets
+cp -r dist/* android/app/src/main/assets/
+echo "✅ Web assets copied"
 
 # Build APK
 echo "🔧 Building APK..."
