@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/bgColor</item>
+        <item name="android:statusBarColor">@color/bgColor</item>
+        <item name="android:navigationBarColor">@color/bgColor</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowBackground">@color/bgColor</item>
+        <item name="android:statusBarColor">@color/bgColor</item>
+        <item name="android:navigationBarColor">@color/bgColor</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+
+    <!-- Colors -->
+    <color name="colorPrimary">#2AABEE</color>
+    <color name="colorPrimaryDark">#1a1a2e</color>
+    <color name="colorAccent">#6C5CE7</color>
+    <color name="bgColor">#0a0e14</color>
+    <color name="surfaceColor">#131920</color>
+    <color name="textColor">#E8EDF2</color>
+    <color name="mutedColor">#6B7D8E</color>
+</resources>

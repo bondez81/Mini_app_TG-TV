@@ -1,5 +1,41 @@
+# Dependencies
 node_modules/
-.next/
+
+# Build output
 dist/
-build/
+
+# Capacitor
+android/local.properties
+android/.gradle/
+android/app/build/
+android/capacitor-cordova-android-plugins/
+android/build/
+android/capacitor.settings.gradle
+android/app/capacitor.build.gradle
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
 *.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Signing
+*.keystore
+*.jks
+keystore.properties
+.next/
+build/
