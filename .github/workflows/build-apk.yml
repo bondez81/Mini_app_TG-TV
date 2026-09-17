@@ -29,44 +29,33 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '8.5'
+
     - name: Install npm dependencies
       run: npm install
 
     - name: Build web app
       run: npm run build
 
-    - name: Verify build output
-      run: |
-        echo "=== Build output ==="
-        ls -la dist/
-        test -f dist/index.html && echo "✅ index.html exists" || echo "❌ index.html missing"
-
     - name: Copy web assets to Android
       run: |
-        echo "=== Copying web assets to Android ==="
         mkdir -p android/app/src/main/assets
         cp -r dist/* android/app/src/main/assets/
         echo "✅ Web assets copied"
         ls -la android/app/src/main/assets/
 
-    - name: Make gradlew executable
-      run: chmod +x android/gradlew
-
     - name: Build Debug APK
       if: startsWith(github.ref, 'refs/tags/') == false
-      run: |
-        echo "=== Building Debug APK ==="
-        cd android
-        ./gradlew assembleDebug --no-daemon --stacktrace
-        echo "=== Build complete ==="
+      working-directory: android
+      run: gradle assembleDebug --no-daemon --stacktrace
 
     - name: Build Release APK
       if: startsWith(github.ref, 'refs/tags/')
-      run: |
-        echo "=== Building Release APK ==="
-        cd android
-        ./gradlew assembleRelease --no-daemon --stacktrace
-        echo "=== Build complete ==="
+      working-directory: android
+      run: gradle assembleRelease --no-daemon --stacktrace
 
     - name: Verify APK output
       run: |
