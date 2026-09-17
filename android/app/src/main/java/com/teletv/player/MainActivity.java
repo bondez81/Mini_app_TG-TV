@@ -59,6 +59,10 @@ public class MainActivity extends Activity {
             webSettings.setSupportZoom(false);
             webSettings.setBuiltInZoomControls(false);
             
+            // Разрешаем загрузку скриптов из локальных файлов (решение CORS проблемы)
+            webSettings.setAllowUniversalAccessFromFileURLs(true);
+            webSettings.setAllowFileAccessFromFileURLs(true);
+            
             Log.i(TAG, "WebView settings configured");
             
             // Enable debugging
