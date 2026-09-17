@@ -2,102 +2,185 @@
 
 @layer base {
   :root {
-    --color-primary: #0088cc;
-    --color-primary-light: #33b5e5;
-    --color-accent: #7c4dff;
-    --color-surface: #0f1419;
-    --color-surface-light: #1a2332;
-    --color-text: #e8edf2;
-    --color-text-muted: #8899aa;
+    --tv-bg: #0a0e14;
+    --tv-surface: #131920;
+    --tv-surface-2: #1a2230;
+    --tv-border: rgba(255,255,255,0.06);
+    --tv-primary: #2AABEE;
+    --tv-accent: #6C5CE7;
+    --tv-text: #E8EDF2;
+    --tv-muted: #6B7D8E;
+    --tv-focus: #2AABEE;
   }
 
   * {
-    scrollbar-width: thin;
-    scrollbar-color: #334155 #0f1419;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  html {
-    scroll-behavior: smooth;
+  html, body, #root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--tv-bg);
+    color: var(--tv-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--color-surface);
-    color: var(--color-text);
+    user-select: none;
   }
 }
 
 @layer components {
+  /* TV Focus System - simulates D-pad navigation */
+  .tv-focusable {
+    outline: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .tv-focusable:focus-visible,
+  .tv-focusable.focused {
+    outline: 3px solid var(--tv-focus);
+    outline-offset: 4px;
+    transform: scale(1.04);
+    z-index: 10;
+    box-shadow: 0 0 30px rgba(42, 171, 238, 0.3), 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .tv-card {
+    background: var(--tv-surface);
+    border: 1px solid var(--tv-border);
+    border-radius: 16px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .tv-card:hover,
+  .tv-card.focused {
+    background: var(--tv-surface-2);
+    border-color: rgba(42, 171, 238, 0.3);
+    transform: scale(1.03);
+    box-shadow: 0 0 40px rgba(42, 171, 238, 0.15), 0 12px 40px rgba(0,0,0,0.5);
+  }
+
+  .tv-sidebar-item {
+    padding: 14px 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 16px;
+    color: var(--tv-muted);
+    transition: all 0.2s;
+    cursor: pointer;
+    border: 2px solid transparent;
+  }
+
+  .tv-sidebar-item:hover,
+  .tv-sidebar-item.focused {
+    background: rgba(42, 171, 238, 0.1);
+    color: var(--tv-text);
+    border-color: rgba(42, 171, 238, 0.3);
+  }
+
+  .tv-sidebar-item.active {
+    background: rgba(42, 171, 238, 0.15);
+    color: var(--tv-primary);
+    border-color: rgba(42, 171, 238, 0.4);
+  }
+
+  .tv-button {
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: 2px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .tv-button-primary {
+    background: linear-gradient(135deg, #2AABEE, #6C5CE7);
+    color: white;
+  }
+
+  .tv-button-primary:hover,
+  .tv-button-primary.focused {
+    box-shadow: 0 0 30px rgba(42, 171, 238, 0.4);
+    transform: scale(1.03);
+  }
+
+  .tv-button-secondary {
+    background: var(--tv-surface-2);
+    color: var(--tv-text);
+    border-color: var(--tv-border);
+  }
+
+  .tv-button-secondary:hover,
+  .tv-button-secondary.focused {
+    border-color: rgba(42, 171, 238, 0.4);
+    background: rgba(42, 171, 238, 0.1);
+  }
+
   .gradient-text {
-    background: linear-gradient(135deg, #0088cc, #7c4dff, #00c9a7);
+    background: linear-gradient(135deg, #2AABEE, #6C5CE7);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  .glass-card {
-    background: rgba(26, 35, 50, 0.6);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
-  .glow-primary {
-    box-shadow: 0 0 40px rgba(0, 136, 204, 0.15), 0 0 80px rgba(0, 136, 204, 0.05);
-  }
-
-  .glow-accent {
-    box-shadow: 0 0 40px rgba(124, 77, 255, 0.15), 0 0 80px rgba(124, 77, 255, 0.05);
-  }
-
-  .hero-gradient {
-    background: radial-gradient(ellipse at 50% 0%, rgba(0, 136, 204, 0.15) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 50%, rgba(124, 77, 255, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 20% 80%, rgba(0, 201, 167, 0.06) 0%, transparent 40%);
-  }
-
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  .animate-float-delayed {
-    animation: float 6s ease-in-out 2s infinite;
-  }
-
-  .animate-pulse-slow {
-    animation: pulse-slow 4s ease-in-out infinite;
-  }
-
-  .animate-slide-up {
-    animation: slide-up 0.8s ease-out forwards;
-    opacity: 0;
+  .animate-slide-in {
+    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .animate-fade-in {
-    animation: fade-in 1s ease-out forwards;
-    opacity: 0;
+    animation: fadeIn 0.3s ease-out;
   }
 
-  .timeline-line {
-    background: linear-gradient(to bottom, #0088cc, #7c4dff, #00c9a7);
+  .animate-scale-in {
+    animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
+@keyframes slideIn {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
-@keyframes pulse-slow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-@keyframes slide-up {
-  from { transform: translateY(40px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes fade-in {
+@keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
 }

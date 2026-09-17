@@ -1,860 +1,1483 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  Tv, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX,
+  Search, Settings, Home, List, Star, Music, Film, Clock,
+  Plus, Heart, ChevronRight, ChevronLeft, X, Check,
+  Shield, Crown, Bell, Palette, LogOut, Phone, QrCode,
+  Maximize2, Subtitles, Repeat, Shuffle, MoreVertical,
+  Download, Trash2, Edit3, ArrowLeft, User, Zap
+} from 'lucide-react';
+import { mockChats, mockMedia, mockPlaylists, getMediaColor, type MediaItem, type Playlist } from './data';
 
-// ==================== ICONS ====================
-const TvIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8">
-    <rect x="2" y="3" width="20" height="14" rx="2" />
-    <path d="M8 21h8M12 17v4" />
-  </svg>
-);
-
-const PlayIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-    <path d="M8 5v14l11-7z" />
-  </svg>
-);
-
-const MusicIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
-    <path d="M9 18V5l12-2v13" />
-    <circle cx="6" cy="18" r="3" />
-    <circle cx="18" cy="16" r="3" />
-  </svg>
-);
-
-const ShieldIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    <path d="M9 12l2 2 4-4" />
-  </svg>
-);
-
-const ListIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
-    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-  </svg>
-);
-
-const RemoteIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
-    <rect x="7" y="2" width="10" height="20" rx="3" />
-    <circle cx="12" cy="7" r="2" />
-    <path d="M10 12h4M10 15h4" />
-  </svg>
-);
-
-const CloudIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
-    <path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z" />
-  </svg>
-);
-
-const StarIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-  </svg>
-);
-
-const CheckIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-    <path d="M20 6L9 17l-5-5" />
-  </svg>
-);
-
-const XIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-    <path d="M18 6L6 18M6 6l12 12" />
-  </svg>
-);
-
-const TelegramIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-  </svg>
-);
-
-// ==================== NAVBAR ====================
-function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'glass-card py-3' : 'py-5'}`}>
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0088cc] to-[#7c4dff] flex items-center justify-center">
-            <TvIcon />
-          </div>
-          <span className="text-xl font-bold">TeleTV <span className="text-[#0088cc]">Player</span></span>
-        </div>
-        <div className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-sm text-gray-300 hover:text-white transition-colors">Features</a>
-          <a href="#pricing" className="text-sm text-gray-300 hover:text-white transition-colors">Pricing</a>
-          <a href="#tech" className="text-sm text-gray-300 hover:text-white transition-colors">Tech Stack</a>
-          <a href="#roadmap" className="text-sm text-gray-300 hover:text-white transition-colors">Roadmap</a>
-          <a href="#devices" className="text-sm text-gray-300 hover:text-white transition-colors">Devices</a>
-        </div>
-        <a href="#download" className="px-5 py-2 rounded-full bg-gradient-to-r from-[#0088cc] to-[#7c4dff] text-white text-sm font-medium hover:opacity-90 transition-opacity">
-          Download APK
-        </a>
-      </div>
-    </nav>
-  );
-}
-
-// ==================== HERO ====================
-function Hero() {
-  return (
-    <section className="relative min-h-screen flex items-center justify-center hero-gradient overflow-hidden">
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-[#0088cc] rounded-full opacity-5 blur-3xl animate-float" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#7c4dff] rounded-full opacity-5 blur-3xl animate-float-delayed" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#00c9a7] rounded-full opacity-3 blur-3xl" />
-      </div>
-
-      <div className="relative z-10 max-w-6xl mx-auto px-6 text-center pt-20">
-        <div className="animate-slide-up">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card mb-8">
-            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-sm text-gray-300">Version 1.1 • September 2026</span>
-          </div>
-        </div>
-
-        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-          <span className="gradient-text">TeleTV Player</span>
-        </h1>
-
-        <p className="text-xl md:text-2xl text-gray-300 mb-4 animate-slide-up max-w-3xl mx-auto" style={{ animationDelay: '0.2s' }}>
-          Watch Telegram videos & listen to music on your Android TV
-        </p>
-
-        <p className="text-lg text-gray-400 mb-12 animate-slide-up max-w-2xl mx-auto" style={{ animationDelay: '0.3s' }}>
-          Native Android TV app with D-pad navigation, playlists, hardware-accelerated playback, 
-          and 7-day free trial. No servers needed — direct Telegram client.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-          <a href="#download" className="group px-8 py-4 rounded-2xl bg-gradient-to-r from-[#0088cc] to-[#7c4dff] text-white font-semibold text-lg hover:scale-105 transition-transform glow-primary flex items-center gap-3">
-            <PlayIcon />
-            Get Started Free
-          </a>
-          <a href="#features" className="px-8 py-4 rounded-2xl glass-card text-white font-semibold text-lg hover:bg-white/10 transition-colors flex items-center gap-3">
-            <ListIcon />
-            View Features
-          </a>
-        </div>
-
-        {/* TV Mockup Image */}
-        <div className="mt-16 animate-fade-in relative" style={{ animationDelay: '0.5s' }}>
-          <div className="relative rounded-2xl overflow-hidden glow-primary max-w-5xl mx-auto">
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0f1419] via-transparent to-transparent z-10" />
-            <img 
-              src="https://image.qwenlm.ai/generated-images/7120ab3b-32a6-4c82-9671-80a2a4b51cef/_result.png" 
-              alt="TeleTV Player Interface" 
-              className="w-full rounded-2xl border border-white/10"
-            />
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16 animate-fade-in" style={{ animationDelay: '0.6s' }}>
-          {[
-            { value: '10+', label: 'Video Formats' },
-            { value: '6+', label: 'Audio Formats' },
-            { value: '4K', label: 'Resolution' },
-            { value: '7', label: 'Days Free Trial' },
-          ].map((stat) => (
-            <div key={stat.label} className="glass-card rounded-2xl p-6">
-              <div className="text-3xl font-bold gradient-text">{stat.value}</div>
-              <div className="text-sm text-gray-400 mt-1">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ==================== FEATURES ====================
-function Features() {
-  const features = [
-    {
-      icon: <TelegramIcon />,
-      title: 'Telegram Integration',
-      description: 'Login via QR code or phone number. Access all your chats, channels, and saved messages with media.',
-      color: 'from-[#0088cc] to-[#00c9a7]',
-    },
-    {
-      icon: <PlayIcon />,
-      title: 'Universal Player',
-      description: 'Hardware-accelerated playback with ExoPlayer. Supports MKV, MP4, AVI, TS, MOV, FLV, 3GP and more.',
-      color: 'from-[#7c4dff] to-[#0088cc]',
-    },
-    {
-      icon: <MusicIcon />,
-      title: 'Music & Audio',
-      description: 'Full audio support: MP3, FLAC, M4A, AAC, OGG. Background playback with notification controls.',
-      color: 'from-[#00c9a7] to-[#7c4dff]',
-    },
-    {
-      icon: <ListIcon />,
-      title: 'Playlists',
-      description: 'Create, edit, and manage playlists. Mix video and audio. Sort by name, date, or manually.',
-      color: 'from-[#0088cc] to-[#7c4dff]',
-    },
-    {
-      icon: <RemoteIcon />,
-      title: 'D-pad Navigation',
-      description: 'Full remote control support. Leanback UI designed for TV. Navigate everything with your remote.',
-      color: 'from-[#7c4dff] to-[#00c9a7]',
-    },
-    {
-      icon: <ShieldIcon />,
-      title: 'Privacy First',
-      description: 'All data stored locally. No servers, no trackers. Encrypted tokens with Android Keystore.',
-      color: 'from-[#00c9a7] to-[#0088cc]',
-    },
-  ];
-
-  return (
-    <section id="features" className="py-24 relative">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Everything you need for <span className="gradient-text">TV media</span>
-          </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            A complete solution for watching Telegram media on your big screen
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
-            <div
-              key={feature.title}
-              className="glass-card rounded-3xl p-8 hover:scale-[1.02] transition-transform duration-300 group"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                {feature.icon}
-              </div>
-              <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-              <p className="text-gray-400 leading-relaxed">{feature.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ==================== PRICING ====================
-function Pricing() {
-  const plans = [
-    {
-      name: 'Free',
-      price: '$0',
-      period: 'forever',
-      description: 'Basic features after 7-day trial',
-      features: [
-        { text: 'Watch Telegram videos', included: true },
-        { text: 'Listen to audio', included: true },
-        { text: 'Chat & channel browsing', included: true },
-        { text: 'Saved Messages access', included: true },
-        { text: 'D-pad navigation', included: true },
-        { text: 'Subtitles support', included: true },
-        { text: 'Playlists', included: false },
-        { text: 'Background playback', included: false },
-        { text: 'Watch progress sync', included: false },
-        { text: 'Custom themes', included: false },
-      ],
-      cta: 'Start Free Trial',
-      highlighted: false,
-    },
-    {
-      name: 'Pro',
-      price: '$6.99',
-      period: 'one-time',
-      description: 'Full access, forever',
-      features: [
-        { text: 'Everything in Free', included: true },
-        { text: 'Unlimited playlists', included: true },
-        { text: 'Background playback', included: true },
-        { text: 'Watch progress sync', included: true },
-        { text: '"Continue Watching" section', included: true },
-        { text: 'Custom themes & colors', included: true },
-        { text: 'Priority support', included: true },
-        { text: 'Early beta access', included: true },
-        { text: 'No ads', included: true },
-        { text: 'Cloud sync (future)', included: true },
-      ],
-      cta: 'Buy Pro — $6.99',
-      highlighted: true,
-    },
-    {
-      name: 'Subscription',
-      price: '$1.99',
-      period: '/month',
-      description: 'Or $19.99/year (save 17%)',
-      features: [
-        { text: 'Everything in Pro', included: true },
-        { text: 'Pay monthly or yearly', included: true },
-        { text: 'Cancel anytime', included: true },
-        { text: '3-day grace period', included: true },
-        { text: 'Restore purchases', included: true },
-        { text: 'All future features', included: true },
-        { text: 'Cloud sync (future)', included: true },
-        { text: 'Multi-device (future)', included: true },
-        { text: 'Priority support', included: true },
-        { text: 'Early beta access', included: true },
-      ],
-      cta: 'Subscribe',
-      highlighted: false,
-    },
-  ];
-
-  return (
-    <section id="pricing" className="py-24 relative">
-      <div className="absolute inset-0 hero-gradient opacity-50" />
-      <div className="relative max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Simple, <span className="gradient-text">fair pricing</span>
-          </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            7-day free trial for all features. Then choose what works for you.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`rounded-3xl p-8 relative ${
-                plan.highlighted
-                  ? 'glass-card glow-primary border-2 border-[#0088cc]/30 scale-105'
-                  : 'glass-card'
-              }`}
-            >
-              {plan.highlighted && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#0088cc] to-[#7c4dff] text-sm font-medium">
-                  Most Popular
-                </div>
-              )}
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className="text-gray-400">{plan.period}</span>
-                </div>
-                <p className="text-gray-400 mt-2 text-sm">{plan.description}</p>
-              </div>
-
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature) => (
-                  <li key={feature.text} className="flex items-center gap-3">
-                    <span className={feature.included ? 'text-green-400' : 'text-gray-600'}>
-                      {feature.included ? <CheckIcon /> : <XIcon />}
-                    </span>
-                    <span className={feature.included ? 'text-gray-200' : 'text-gray-500'}>
-                      {feature.text}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                className={`w-full py-3 rounded-xl font-semibold transition-all ${
-                  plan.highlighted
-                    ? 'bg-gradient-to-r from-[#0088cc] to-[#7c4dff] text-white hover:opacity-90'
-                    : 'glass-card text-white hover:bg-white/10'
-                }`}
-              >
-                {plan.cta}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ==================== TECH STACK ====================
-function TechStack() {
-  const stack = [
-    { name: 'Kotlin 2.0+', category: 'Language', icon: '🟣' },
-    { name: 'Jetpack Compose for TV', category: 'UI Framework', icon: '🎨' },
-    { name: 'ExoPlayer (Media3)', category: 'Video Player', icon: '▶️' },
-    { name: 'TDLib', category: 'Telegram API', icon: '📨' },
-    { name: 'Room Database', category: 'Local Storage', icon: '💾' },
-    { name: 'Hilt DI', category: 'Dependency Injection', icon: '💉' },
-    { name: 'EncryptedSharedPreferences', category: 'Security', icon: '🔐' },
-    { name: 'Google Play Billing 6+', category: 'Monetization', icon: '💰' },
-    { name: 'Coroutines + Flow', category: 'Async', icon: '⚡' },
-    { name: 'MVVM + Clean Architecture', category: 'Architecture', icon: '🏗️' },
-    { name: 'Gradle 8+', category: 'Build System', icon: '🔧' },
-    { name: 'GitHub Actions', category: 'CI/CD', icon: '🚀' },
-  ];
-
-  const modules = [
-    { name: ':app', description: 'Main application module' },
-    { name: ':core:player', description: 'ExoPlayer wrapper & media handling' },
-    { name: ':core:telegram', description: 'TDLib wrapper & Telegram integration' },
-    { name: ':feature:playlists', description: 'Playlist creation & management' },
-    { name: ':feature:billing', description: 'Subscription & purchase logic' },
-  ];
-
-  return (
-    <section id="tech" className="py-24 relative">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Built with <span className="gradient-text">modern tech</span>
-          </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Clean architecture, modular design, and best Android practices
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-12">
-          {/* Tech Stack Grid */}
-          <div>
-            <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
-              <span className="w-8 h-8 rounded-lg bg-[#0088cc]/20 flex items-center justify-center text-sm">📦</span>
-              Technology Stack
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {stack.map((tech) => (
-                <div key={tech.name} className="glass-card rounded-xl p-4 flex items-center gap-3 hover:bg-white/5 transition-colors">
-                  <span className="text-xl">{tech.icon}</span>
-                  <div>
-                    <div className="text-sm font-medium">{tech.name}</div>
-                    <div className="text-xs text-gray-500">{tech.category}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Project Structure */}
-          <div>
-            <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
-              <span className="w-8 h-8 rounded-lg bg-[#7c4dff]/20 flex items-center justify-center text-sm">📁</span>
-              Project Modules
-            </h3>
-            <div className="space-y-3">
-              {modules.map((mod) => (
-                <div key={mod.name} className="glass-card rounded-xl p-5 hover:bg-white/5 transition-colors">
-                  <div className="font-mono text-[#00c9a7] text-sm mb-1">{mod.name}</div>
-                  <div className="text-gray-400 text-sm">{mod.description}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8 glass-card rounded-xl p-5">
-              <h4 className="font-semibold mb-3 flex items-center gap-2">
-                <ShieldIcon /> Security
-              </h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li className="flex items-center gap-2"><span className="text-green-400">✓</span> Local-only data storage</li>
-                <li className="flex items-center gap-2"><span className="text-green-400">✓</span> Android Keystore encryption</li>
-                <li className="flex items-center gap-2"><span className="text-green-400">✓</span> No trackers or analytics</li>
-                <li className="flex items-center gap-2"><span className="text-green-400">✓</span> Open source (GPL-3.0)</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ==================== ROADMAP ====================
-function Roadmap() {
-  const phases = [
-    {
-      phase: 'MVP',
-      timeline: '1–2 months',
-      status: 'current',
-      tasks: [
-        'Telegram authorization (QR + phone)',
-        'Chat/channel media browsing',
-        'Basic video player (ExoPlayer)',
-        'Basic audio player',
-        'D-pad navigation (Leanback)',
-        'Saved Messages section',
-      ],
-    },
-    {
-      phase: 'v1.0',
-      timeline: '3 months',
-      status: 'planned',
-      tasks: [
-        'Playlist creation & management',
-        'Advanced search (name, date, type)',
-        'Watch progress saving',
-        '7-day free trial',
-        '"Continue Watching" section',
-        'Subtitle support (SRT, ASS)',
-      ],
-    },
-    {
-      phase: 'v1.1',
-      timeline: '4 months',
-      status: 'planned',
-      tasks: [
-        'Pro features unlock',
-        'Custom themes & accent colors',
-        'Background audio playback',
-        'Notification controls',
-        'Google Play Billing integration',
-        'Gumroad/PayPal for APK',
-      ],
-    },
-    {
-      phase: 'v2.0',
-      timeline: '6 months',
-      status: 'future',
-      tasks: [
-        'Mobile version (adaptive UI)',
-        'Cloud playlist sync',
-        'Multi-device support',
-        'Chromecast integration',
-        'Advanced audio processing',
-        'Community features',
-      ],
-    },
-  ];
-
-  return (
-    <section id="roadmap" className="py-24 relative">
-      <div className="absolute inset-0 hero-gradient opacity-30" />
-      <div className="relative max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Development <span className="gradient-text">Roadmap</span>
-          </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            From MVP to full-featured media center
-          </p>
-        </div>
-
-        <div className="relative">
-          {/* Timeline line */}
-          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-0.5 timeline-line opacity-30" />
-
-          <div className="space-y-12">
-            {phases.map((phase, index) => (
-              <div key={phase.phase} className={`flex flex-col md:flex-row items-center gap-8 ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
-                <div className={`flex-1 ${index % 2 === 0 ? 'md:text-right' : 'md:text-left'}`}>
-                  <div className={`glass-card rounded-3xl p-8 inline-block max-w-md ${index % 2 === 0 ? 'md:ml-auto' : 'md:mr-auto'}`}>
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        phase.status === 'current' ? 'bg-green-500/20 text-green-400' :
-                        phase.status === 'planned' ? 'bg-[#0088cc]/20 text-[#0088cc]' :
-                        'bg-gray-500/20 text-gray-400'
-                      }`}>
-                        {phase.status === 'current' ? '🔵 In Progress' : phase.status === 'planned' ? '📋 Planned' : '🔮 Future'}
-                      </span>
-                      <span className="text-sm text-gray-500">{phase.timeline}</span>
-                    </div>
-                    <h3 className="text-2xl font-bold mb-4">{phase.phase}</h3>
-                    <ul className="space-y-2">
-                      {phase.tasks.map((task) => (
-                        <li key={task} className="text-gray-400 text-sm flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#0088cc] flex-shrink-0" />
-                          {task}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Timeline dot */}
-                <div className="hidden md:flex w-4 h-4 rounded-full bg-gradient-to-r from-[#0088cc] to-[#7c4dff] ring-4 ring-[#0088cc]/20 z-10" />
-
-                <div className="flex-1" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ==================== DEVICES ====================
-function Devices() {
-  const devices = [
-    { name: 'Mi TV Stick', resolution: '1080p', icon: '📺' },
-    { name: 'Mi Box S', resolution: '4K', icon: '📺' },
-    { name: 'NVIDIA Shield', resolution: '4K', icon: '🛡️' },
-    { name: 'Chromecast w/ Google TV', resolution: '4K', icon: '🎬' },
-    { name: 'Philips Android TV', resolution: '4K', icon: '📺' },
-    { name: 'Sony Bravia', resolution: '4K', icon: '📺' },
-    { name: 'TCL Android TV', resolution: '1080p', icon: '📺' },
-    { name: 'Generic Android TV Box', resolution: '1080p+', icon: '📦' },
-  ];
-
-  return (
-    <section id="devices" className="py-24 relative">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Works on <span className="gradient-text">your TV</span>
-          </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Compatible with all Android TV devices running Android 8.0+
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {devices.map((device) => (
-            <div key={device.name} className="glass-card rounded-2xl p-6 text-center hover:scale-105 transition-transform">
-              <div className="text-4xl mb-3">{device.icon}</div>
-              <div className="font-semibold text-sm">{device.name}</div>
-              <div className="text-xs text-gray-500 mt-1">{device.resolution}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-12 glass-card rounded-3xl p-8 text-center">
-          <h3 className="text-xl font-bold mb-4">Supported Formats</h3>
-          <div className="flex flex-wrap justify-center gap-3">
-            {['MKV', 'MP4', 'AVI', 'TS', 'MOV', 'FLV', '3GP', 'MP3', 'FLAC', 'M4A', 'AAC', 'OGG', 'SRT', 'ASS'].map((format) => (
-              <span key={format} className="px-3 py-1.5 rounded-lg bg-white/5 text-sm font-mono text-gray-300 border border-white/10">
-                {format}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ==================== COMPARISON ====================
-function Comparison() {
-  const solutions = [
-    {
-      name: 'Tele (GitHub)',
-      pros: ['FOSS', 'Android TV', 'Video streaming'],
-      cons: ['Video only', 'No playlists', 'No music'],
-      license: 'MIT',
-    },
-    {
-      name: 'TMPlayer',
-      pros: ['FOSS', 'Video + Audio', 'Streaming', 'Mi TV support'],
-      cons: ['No playlists', 'No Pro features'],
-      license: 'GPL-3.0',
-    },
-    {
-      name: 'TelePlay',
-      pros: ['Playlists', 'Progress tracking', 'Web + TV + Mobile'],
-      cons: ['Requires server (Docker)', 'Complex setup'],
-      license: 'MIT',
-    },
-    {
-      name: 'TeleTV Player',
-      pros: ['Video + Audio', 'Playlists', 'No server needed', 'Direct client', 'Pro features', '7-day trial'],
-      cons: ['New project'],
-      license: 'GPL-3.0',
-      highlighted: true,
-    },
-  ];
-
-  return (
-    <section className="py-24 relative">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Why <span className="gradient-text">TeleTV Player</span>?
-          </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            The best of existing solutions, combined into one app
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {solutions.map((solution) => (
-            <div
-              key={solution.name}
-              className={`rounded-3xl p-6 ${
-                solution.highlighted
-                  ? 'glass-card glow-primary border-2 border-[#0088cc]/30'
-                  : 'glass-card'
-              }`}
-            >
-              <h3 className={`text-lg font-bold mb-4 ${solution.highlighted ? 'gradient-text' : ''}`}>
-                {solution.name}
-              </h3>
-              <div className="space-y-2 mb-4">
-                {solution.pros.map((pro) => (
-                  <div key={pro} className="flex items-center gap-2 text-sm">
-                    <span className="text-green-400 flex-shrink-0">✓</span>
-                    <span className="text-gray-300">{pro}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-2 mb-4">
-                {solution.cons.map((con) => (
-                  <div key={con} className="flex items-center gap-2 text-sm">
-                    <span className="text-red-400 flex-shrink-0">✗</span>
-                    <span className="text-gray-500">{con}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="pt-3 border-t border-white/10">
-                <span className="text-xs text-gray-500">License: {solution.license}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ==================== DOWNLOAD / CTA ====================
-function Download() {
-  return (
-    <section id="download" className="py-24 relative">
-      <div className="absolute inset-0 hero-gradient" />
-      <div className="relative max-w-4xl mx-auto px-6 text-center">
-        <div className="glass-card rounded-[2rem] p-12 md:p-16 glow-primary">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#0088cc] to-[#7c4dff] flex items-center justify-center mx-auto mb-8">
-            <TvIcon />
-          </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Ready to <span className="gradient-text">watch</span>?
-          </h2>
-          <p className="text-xl text-gray-400 mb-10 max-w-xl mx-auto">
-            Download TeleTV Player and start watching Telegram media on your TV. 
-            7-day free trial included.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
-            <button className="px-8 py-4 rounded-2xl bg-gradient-to-r from-[#0088cc] to-[#7c4dff] text-white font-semibold text-lg hover:scale-105 transition-transform flex items-center gap-3">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                <path d="M17.523 2H6.477C5.109 2 4 3.109 4 4.477v15.046C4 20.891 5.109 22 6.477 22h11.046C18.891 22 20 20.891 20 19.523V4.477C20 3.109 18.891 2 17.523 2zM12 19.5c-.828 0-1.5-.672-1.5-1.5s.672-1.5 1.5-1.5 1.5.672 1.5 1.5-.672 1.5-1.5 1.5zm5-4H7V5h10v10.5z"/>
-              </svg>
-              Google Play
-            </button>
-            <button className="px-8 py-4 rounded-2xl glass-card text-white font-semibold text-lg hover:bg-white/10 transition-colors flex items-center gap-3">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-              </svg>
-              GitHub APK
-            </button>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-400">
-            <span className="flex items-center gap-2">
-              <CloudIcon /> No server needed
-            </span>
-            <span className="flex items-center gap-2">
-              <ShieldIcon /> Privacy first
-            </span>
-            <span className="flex items-center gap-2">
-              <StarIcon /> 7-day free trial
-            </span>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ==================== FOOTER ====================
-function Footer() {
-  return (
-    <footer className="py-12 border-t border-white/5">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-4 gap-8 mb-12">
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0088cc] to-[#7c4dff] flex items-center justify-center">
-                <TvIcon />
-              </div>
-              <span className="text-lg font-bold">TeleTV Player</span>
-            </div>
-            <p className="text-sm text-gray-500">
-              Telegram media player for Android TV. Watch videos, listen to music, create playlists.
-            </p>
-          </div>
-
-          <div>
-            <h4 className="font-semibold mb-4">Product</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-              <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
-              <li><a href="#roadmap" className="hover:text-white transition-colors">Roadmap</a></li>
-              <li><a href="#download" className="hover:text-white transition-colors">Download</a></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold mb-4">Resources</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">API Reference</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">GitHub</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Changelog</a></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold mb-4">Support</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li><a href="mailto:support@teletv.app" className="hover:text-white transition-colors">📧 support@teletv.app</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">💬 @TeleTVSupport</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">🐛 GitHub Issues</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">📖 FAQ</a></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-500">
-            © 2026 TeleTV Player. Open source under GPL-3.0.
-          </p>
-          <div className="flex items-center gap-4">
-            <a href="#" className="text-gray-500 hover:text-white transition-colors">
-              <TelegramIcon />
-            </a>
-            <a href="#" className="text-gray-500 hover:text-white transition-colors">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-              </svg>
-            </a>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-}
+// ==================== TYPES ====================
+type Screen = 'auth' | 'home' | 'player' | 'playlists' | 'settings' | 'paywall' | 'search';
+type SidebarItem = 'home' | 'channels' | 'saved' | 'playlists' | 'continue' | 'settings';
 
 // ==================== MAIN APP ====================
 export default function App() {
+  const [screen, setScreen] = useState<Screen>('auth');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+  const [trialDays, setTrialDays] = useState(7);
+  const [activeSidebar, setActiveSidebar] = useState<SidebarItem>('home');
+  const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const [currentMedia, setCurrentMedia] = useState<MediaItem | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playProgress, setPlayProgress] = useState(0);
+  const [playlists, setPlaylists] = useState<Playlist[]>(mockPlaylists);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [mediaFilter, setMediaFilter] = useState<'all' | 'video' | 'audio'>('all');
+  const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
+  const [newPlaylistName, setNewPlaylistName] = useState('');
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [notification, setNotification] = useState<string | null>(null);
+
+  // Notification helper
+  const showNotification = useCallback((msg: string) => {
+    setNotification(msg);
+    setTimeout(() => setNotification(null), 2500);
+  }, []);
+
+  // Simulate playback progress
+  useEffect(() => {
+    if (!isPlaying || !currentMedia) return;
+    const interval = setInterval(() => {
+      setPlayProgress(prev => {
+        if (prev >= 100) {
+          setIsPlaying(false);
+          return 0;
+        }
+        return prev + (100 / currentMedia.durationSec) * 2;
+      });
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [isPlaying, currentMedia]);
+
+  // Auth handler
+  const handleAuth = () => {
+    setIsAuthenticated(true);
+    setScreen('home');
+    showNotification('Welcome to TeleTV Player!');
+  };
+
+  // Play media
+  const handlePlay = (media: MediaItem) => {
+    setCurrentMedia(media);
+    setPlayProgress(media.progress || 0);
+    setIsPlaying(true);
+    setScreen('player');
+  };
+
+  // Create playlist
+  const handleCreatePlaylist = () => {
+    if (!newPlaylistName.trim()) return;
+    const newPlaylist: Playlist = {
+      id: `p${Date.now()}`,
+      name: newPlaylistName,
+      items: [],
+      createdAt: new Date().toISOString().split('T')[0],
+      isFavorite: false,
+    };
+    setPlaylists([...playlists, newPlaylist]);
+    setNewPlaylistName('');
+    setShowCreatePlaylist(false);
+    showNotification('Playlist created!');
+  };
+
+  // Add to playlist
+  const handleAddToPlaylist = (playlistId: string, mediaId: string) => {
+    setPlaylists(playlists.map(p =>
+      p.id === playlistId ? { ...p, items: [...p.items, mediaId] } : p
+    ));
+    showNotification('Added to playlist!');
+  };
+
+  // Toggle favorite playlist
+  const toggleFavorite = (playlistId: string) => {
+    setPlaylists(playlists.map(p =>
+      p.id === playlistId ? { ...p, isFavorite: !p.isFavorite } : p
+    ));
+  };
+
+  // Delete playlist
+  const deletePlaylist = (playlistId: string) => {
+    setPlaylists(playlists.filter(p => p.id !== playlistId));
+    showNotification('Playlist deleted');
+  };
+
+  // Filtered media
+  const filteredMedia = mockMedia.filter(m => {
+    const matchesChat = !selectedChat || m.chatId === selectedChat;
+    const matchesFilter = mediaFilter === 'all' || m.type === mediaFilter;
+    const matchesSearch = !searchQuery || m.title.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesChat && matchesFilter && matchesSearch;
+  });
+
+  const continueWatching = mockMedia.filter(m => m.progress && m.progress > 0 && m.progress < 95);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (screen === 'auth') return;
+      
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+          e.preventDefault();
+          setFocusedIndex(prev => prev + 1);
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          e.preventDefault();
+          setFocusedIndex(prev => Math.max(0, prev - 1));
+          break;
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          // Handled by focused elements
+          break;
+        case 'Escape':
+        case 'Backspace':
+          e.preventDefault();
+          if (screen === 'player') {
+            setScreen('home');
+            setIsPlaying(false);
+          } else if (screen === 'search') {
+            setScreen('home');
+            setSearchQuery('');
+          } else if (selectedChat) {
+            setSelectedChat(null);
+          }
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [screen, selectedChat]);
+
+  // ==================== RENDER ====================
+  if (screen === 'auth') {
+    return <AuthScreen onAuth={handleAuth} />;
+  }
+
+  if (screen === 'player' && currentMedia) {
+    return (
+      <PlayerScreen
+        media={currentMedia}
+        isPlaying={isPlaying}
+        progress={playProgress}
+        onTogglePlay={() => setIsPlaying(!isPlaying)}
+        onSeek={(p) => setPlayProgress(p)}
+        onBack={() => { setScreen('home'); setIsPlaying(false); }}
+        onNext={() => {
+          const idx = filteredMedia.findIndex(m => m.id === currentMedia.id);
+          const next = filteredMedia[(idx + 1) % filteredMedia.length];
+          if (next) handlePlay(next);
+        }}
+        onPrev={() => {
+          const idx = filteredMedia.findIndex(m => m.id === currentMedia.id);
+          const prev = filteredMedia[(idx - 1 + filteredMedia.length) % filteredMedia.length];
+          if (prev) handlePlay(prev);
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#0f1419] text-white overflow-x-hidden">
-      <Navbar />
-      <Hero />
-      <Features />
-      <Comparison />
-      <Pricing />
-      <TechStack />
-      <Roadmap />
-      <Devices />
-      <Download />
-      <Footer />
+    <div className="w-full h-full flex relative">
+      {/* Sidebar */}
+      <Sidebar
+        activeItem={activeSidebar}
+        onSelect={(item) => {
+          setActiveSidebar(item);
+          setSelectedChat(null);
+          if (item === 'playlists') setScreen('playlists');
+          else if (item === 'settings') setScreen('settings');
+          else setScreen('home');
+        }}
+        isPro={isPro}
+        trialDays={trialDays}
+      />
+
+      {/* Main Content */}
+      <main className="flex-1 h-full overflow-hidden">
+        {screen === 'home' && (
+          <HomeScreen
+            chats={mockChats}
+            media={filteredMedia}
+            continueWatching={continueWatching}
+            selectedChat={selectedChat}
+            onSelectChat={setSelectedChat}
+            onPlayMedia={handlePlay}
+            mediaFilter={mediaFilter}
+            onFilterChange={setMediaFilter}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onOpenSearch={() => setScreen('search')}
+            playlists={playlists}
+            onAddToPlaylist={handleAddToPlaylist}
+            isPro={isPro}
+          />
+        )}
+        {screen === 'search' && (
+          <SearchScreen
+            query={searchQuery}
+            onQueryChange={setSearchQuery}
+            media={mockMedia.filter(m => !searchQuery || m.title.toLowerCase().includes(searchQuery.toLowerCase()))}
+            onPlayMedia={handlePlay}
+            onBack={() => { setScreen('home'); setSearchQuery(''); }}
+          />
+        )}
+        {screen === 'playlists' && (
+          <PlaylistsScreen
+            playlists={playlists}
+            media={mockMedia}
+            onToggleFavorite={toggleFavorite}
+            onDelete={deletePlaylist}
+            onPlayMedia={handlePlay}
+            onCreateNew={() => setShowCreatePlaylist(true)}
+            showCreate={showCreatePlaylist}
+            newName={newPlaylistName}
+            onNewNameChange={setNewPlaylistName}
+            onCreate={handleCreatePlaylist}
+            onCancelCreate={() => setShowCreatePlaylist(false)}
+            isPro={isPro}
+            onShowPaywall={() => setScreen('paywall')}
+          />
+        )}
+        {screen === 'settings' && (
+          <SettingsScreen
+            isPro={isPro}
+            onTogglePro={() => { setIsPro(!isPro); showNotification(isPro ? 'Pro disabled' : 'Pro activated!'); }}
+            onShowPaywall={() => setScreen('paywall')}
+            onLogout={() => { setIsAuthenticated(false); setScreen('auth'); }}
+          />
+        )}
+        {screen === 'paywall' && (
+          <PaywallScreen
+            onPurchase={() => { setIsPro(true); setScreen('settings'); showNotification('Welcome to Pro! 🎉'); }}
+            onBack={() => setScreen('settings')}
+          />
+        )}
+      </main>
+
+      {/* Notification Toast */}
+      {notification && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-scale-in">
+          <div className="px-6 py-3 rounded-2xl bg-[#2AABEE] text-white font-medium shadow-2xl flex items-center gap-3">
+            <Check size={18} />
+            {notification}
+          </div>
+        </div>
+      )}
+
+      {/* D-pad hint */}
+      <div className="fixed bottom-4 right-4 z-40 text-xs text-[var(--tv-muted)] bg-[var(--tv-surface)] px-3 py-2 rounded-lg border border-[var(--tv-border)]">
+        ← → ↑ ↓ Navigate • Enter Select • Esc Back
+      </div>
     </div>
   );
+}
+
+// ==================== AUTH SCREEN ====================
+function AuthScreen({ onAuth }: { onAuth: () => void }) {
+  const [method, setMethod] = useState<'qr' | 'phone'>('qr');
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [step, setStep] = useState<'input' | 'code'>('input');
+
+  return (
+    <div className="w-full h-full flex items-center justify-center bg-[var(--tv-bg)] relative overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#2AABEE] rounded-full opacity-5 blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#6C5CE7] rounded-full opacity-5 blur-3xl" />
+      </div>
+
+      <div className="relative z-10 max-w-lg w-full mx-6 animate-fade-in">
+        {/* Logo */}
+        <div className="text-center mb-10">
+          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#2AABEE] to-[#6C5CE7] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-[#2AABEE]/20">
+            <Tv size={48} className="text-white" />
+          </div>
+          <h1 className="text-4xl font-bold mb-2">
+            <span className="gradient-text">TeleTV Player</span>
+          </h1>
+          <p className="text-[var(--tv-muted)] text-lg">Sign in with your Telegram account</p>
+        </div>
+
+        {/* Method Toggle */}
+        <div className="flex gap-2 mb-8 bg-[var(--tv-surface)] rounded-2xl p-2">
+          <button
+            onClick={() => { setMethod('qr'); setStep('input'); }}
+            className={`flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+              method === 'qr' ? 'bg-[#2AABEE]/20 text-[#2AABEE]' : 'text-[var(--tv-muted)] hover:text-white'
+            }`}
+          >
+            <QrCode size={18} /> QR Code
+          </button>
+          <button
+            onClick={() => { setMethod('phone'); setStep('input'); }}
+            className={`flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+              method === 'phone' ? 'bg-[#2AABEE]/20 text-[#2AABEE]' : 'text-[var(--tv-muted)] hover:text-white'
+            }`}
+          >
+            <Phone size={18} /> Phone Number
+          </button>
+        </div>
+
+        {/* QR Method */}
+        {method === 'qr' && (
+          <div className="text-center">
+            <div className="w-64 h-64 mx-auto bg-white rounded-3xl p-4 mb-6 flex items-center justify-center">
+              {/* Simulated QR code */}
+              <div className="grid grid-cols-8 gap-1 w-48 h-48">
+                {Array.from({ length: 64 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`rounded-sm ${
+                      [0,1,2,4,5,6,8,10,12,14,16,18,20,22,24,25,26,28,30,32,33,34,36,38,40,42,44,46,48,49,50,52,54,56,57,58,60,61,62].includes(i)
+                        ? 'bg-black' : 'bg-white'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+            <p className="text-[var(--tv-muted)] mb-2">Scan with Telegram app on your phone</p>
+            <p className="text-sm text-[var(--tv-muted)]">Settings → Devices → Link Desktop</p>
+            <button
+              onClick={onAuth}
+              className="mt-6 tv-button tv-button-primary"
+            >
+              <Check size={18} /> Simulate Login
+            </button>
+          </div>
+        )}
+
+        {/* Phone Method */}
+        {method === 'phone' && (
+          <div>
+            {step === 'input' ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-[var(--tv-muted)] mb-2 block">Phone Number</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+1 (234) 567-8900"
+                    className="w-full px-5 py-4 rounded-2xl bg-[var(--tv-surface)] border border-[var(--tv-border)] text-white text-lg focus:border-[#2AABEE] focus:outline-none transition-colors"
+                  />
+                </div>
+                <button
+                  onClick={() => setStep('code')}
+                  className="w-full tv-button tv-button-primary justify-center"
+                >
+                  Next <ChevronRight size={18} />
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-[var(--tv-muted)] text-center mb-4">
+                  Code sent to {phone || '+1 (234) 567-8900'}
+                </p>
+                <div>
+                  <label className="text-sm text-[var(--tv-muted)] mb-2 block">Verification Code</label>
+                  <input
+                    type="text"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    placeholder="12345"
+                    maxLength={5}
+                    className="w-full px-5 py-4 rounded-2xl bg-[var(--tv-surface)] border border-[var(--tv-border)] text-white text-2xl text-center tracking-[1em] focus:border-[#2AABEE] focus:outline-none transition-colors"
+                  />
+                </div>
+                <button
+                  onClick={onAuth}
+                  className="w-full tv-button tv-button-primary justify-center"
+                >
+                  <Shield size={18} /> Verify & Sign In
+                </button>
+                <button
+                  onClick={() => setStep('input')}
+                  className="w-full tv-button tv-button-secondary justify-center"
+                >
+                  <ChevronLeft size={18} /> Back
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Trial Info */}
+        <div className="mt-8 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--tv-surface)] border border-[var(--tv-border)]">
+            <Zap size={14} className="text-[#2AABEE]" />
+            <span className="text-sm text-[var(--tv-muted)]">7-day free trial of Pro features</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== SIDEBAR ====================
+function Sidebar({ activeItem, onSelect, isPro, trialDays }: {
+  activeItem: SidebarItem;
+  onSelect: (item: SidebarItem) => void;
+  isPro: boolean;
+  trialDays: number;
+}) {
+  const items: { id: SidebarItem; icon: React.ReactNode; label: string }[] = [
+    { id: 'home', icon: <Home size={22} />, label: 'Home' },
+    { id: 'channels', icon: <Film size={22} />, label: 'Channels' },
+    { id: 'saved', icon: <Star size={22} />, label: 'Saved' },
+    { id: 'continue', icon: <Clock size={22} />, label: 'Continue' },
+    { id: 'playlists', icon: <List size={22} />, label: 'Playlists' },
+    { id: 'settings', icon: <Settings size={22} />, label: 'Settings' },
+  ];
+
+  return (
+    <aside className="w-72 h-full bg-[var(--tv-surface)] border-r border-[var(--tv-border)] flex flex-col p-5">
+      {/* Logo */}
+      <div className="flex items-center gap-3 mb-8 px-2">
+        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#2AABEE] to-[#6C5CE7] flex items-center justify-center">
+          <Tv size={24} className="text-white" />
+        </div>
+        <div>
+          <div className="font-bold text-lg">TeleTV</div>
+          <div className="text-xs text-[var(--tv-muted)]">Player v1.1</div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 space-y-1">
+        {items.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onSelect(item.id)}
+            className={`tv-sidebar-item w-full tv-focusable ${activeItem === item.id ? 'active' : ''}`}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+            {item.id === 'playlists' && !isPro && (
+              <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-[#6C5CE7]/20 text-[#6C5CE7]">PRO</span>
+            )}
+          </button>
+        ))}
+      </nav>
+
+      {/* Trial / Pro Status */}
+      <div className="mt-auto">
+        {!isPro ? (
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-[#2AABEE]/10 to-[#6C5CE7]/10 border border-[#2AABEE]/20">
+            <div className="flex items-center gap-2 mb-2">
+              <Crown size={16} className="text-[#2AABEE]" />
+              <span className="text-sm font-medium">Free Trial</span>
+            </div>
+            <div className="text-xs text-[var(--tv-muted)]">{trialDays} days remaining</div>
+            <div className="mt-2 h-1.5 rounded-full bg-[var(--tv-surface)] overflow-hidden">
+              <div className="h-full rounded-full bg-gradient-to-r from-[#2AABEE] to-[#6C5CE7]" style={{ width: `${(trialDays / 7) * 100}%` }} />
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-[#2AABEE]/10 to-[#6C5CE7]/10 border border-[#2AABEE]/20">
+            <div className="flex items-center gap-2">
+              <Crown size={16} className="text-[#FFD700]" />
+              <span className="text-sm font-bold gradient-text">PRO Active</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+// ==================== HOME SCREEN ====================
+function HomeScreen({ chats, media, continueWatching, selectedChat, onSelectChat, onPlayMedia, mediaFilter, onFilterChange, searchQuery, onSearchChange, onOpenSearch, playlists, onAddToPlaylist, isPro }: {
+  chats: typeof mockChats;
+  media: MediaItem[];
+  continueWatching: MediaItem[];
+  selectedChat: string | null;
+  onSelectChat: (id: string | null) => void;
+  onPlayMedia: (m: MediaItem) => void;
+  mediaFilter: 'all' | 'video' | 'audio';
+  onFilterChange: (f: 'all' | 'video' | 'audio') => void;
+  searchQuery: string;
+  onSearchChange: (q: string) => void;
+  onOpenSearch: () => void;
+  playlists: Playlist[];
+  onAddToPlaylist: (pid: string, mid: string) => void;
+  isPro: boolean;
+}) {
+  const [showPlaylistMenu, setShowPlaylistMenu] = useState<string | null>(null);
+
+  if (selectedChat) {
+    const chat = chats.find(c => c.id === selectedChat);
+    return (
+      <div className="h-full flex flex-col animate-slide-in">
+        {/* Chat Header */}
+        <div className="p-8 pb-4 flex items-center gap-4">
+          <button onClick={() => onSelectChat(null)} className="tv-button tv-button-secondary !p-3">
+            <ArrowLeft size={20} />
+          </button>
+          <div className="w-14 h-14 rounded-2xl bg-[var(--tv-surface-2)] flex items-center justify-center text-3xl">
+            {chat?.avatar}
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold">{chat?.name}</h2>
+            <p className="text-[var(--tv-muted)]">{chat?.mediaCount} media files</p>
+          </div>
+        </div>
+
+        {/* Filter */}
+        <div className="px-8 pb-4 flex gap-2">
+          {(['all', 'video', 'audio'] as const).map(f => (
+            <button
+              key={f}
+              onClick={() => onFilterChange(f)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                mediaFilter === f
+                  ? 'bg-[#2AABEE]/20 text-[#2AABEE] border border-[#2AABEE]/30'
+                  : 'bg-[var(--tv-surface)] text-[var(--tv-muted)] border border-[var(--tv-border)] hover:text-white'
+              }`}
+            >
+              {f === 'all' ? '📁 All' : f === 'video' ? '🎬 Videos' : '🎵 Audio'}
+            </button>
+          ))}
+        </div>
+
+        {/* Media Grid */}
+        <div className="flex-1 overflow-y-auto scrollbar-hide px-8 pb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {media.map((item) => (
+              <MediaCard
+                key={item.id}
+                item={item}
+                onPlay={() => onPlayMedia(item)}
+                onMore={() => setShowPlaylistMenu(showPlaylistMenu === item.id ? null : item.id)}
+                showMenu={showPlaylistMenu === item.id}
+                playlists={playlists}
+                onAddToPlaylist={onAddToPlaylist}
+                onCloseMenu={() => setShowPlaylistMenu(null)}
+                isPro={isPro}
+              />
+            ))}
+          </div>
+          {media.length === 0 && (
+            <div className="text-center py-20 text-[var(--tv-muted)]">
+              <Film size={48} className="mx-auto mb-4 opacity-50" />
+              <p>No media found in this chat</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full overflow-y-auto scrollbar-hide animate-fade-in">
+      {/* Header */}
+      <div className="sticky top-0 z-20 bg-[var(--tv-bg)]/90 backdrop-blur-xl p-8 pb-4">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">
+            {continueWatching.length > 0 ? 'Welcome back 👋' : 'TeleTV Player'}
+          </h1>
+          <button
+            onClick={onOpenSearch}
+            className="tv-button tv-button-secondary"
+          >
+            <Search size={18} /> Search
+          </button>
+        </div>
+
+        {/* Quick Search */}
+        {searchQuery && (
+          <div className="relative mb-4">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search media..."
+              className="w-full px-5 py-3 rounded-2xl bg-[var(--tv-surface)] border border-[var(--tv-border)] text-white focus:border-[#2AABEE] focus:outline-none"
+            />
+            {searchQuery && (
+              <button onClick={() => onSearchChange('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--tv-muted)]">
+                <X size={18} />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="px-8 pb-8 space-y-8">
+        {/* Continue Watching */}
+        {continueWatching.length > 0 && (
+          <section>
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Clock size={20} className="text-[#2AABEE]" /> Continue Watching
+            </h2>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {continueWatching.map(item => (
+                <MediaCard
+                  key={item.id}
+                  item={item}
+                  onPlay={() => onPlayMedia(item)}
+                  onMore={() => {}}
+                  showMenu={false}
+                  playlists={[]}
+                  onAddToPlaylist={() => {}}
+                  onCloseMenu={() => {}}
+                  isPro={isPro}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Chats/Channels */}
+        <section>
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Film size={20} className="text-[#6C5CE7]" /> Your Channels & Chats
+          </h2>
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {chats.map(chat => (
+              <button
+                key={chat.id}
+                onClick={() => onSelectChat(chat.id)}
+                className="tv-card tv-focusable p-5 text-left"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-[var(--tv-surface-2)] flex items-center justify-center text-3xl mb-3">
+                  {chat.avatar}
+                </div>
+                <div className="font-medium text-sm truncate">{chat.name}</div>
+                <div className="text-xs text-[var(--tv-muted)] mt-1">{chat.mediaCount} files</div>
+                <div className="text-xs text-[var(--tv-muted)] mt-0.5">{chat.lastActivity}</div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Recent Media */}
+        <section>
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Star size={20} className="text-[#FFD700]" /> Recent Media
+          </h2>
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {mockMedia.slice(0, 8).map(item => (
+              <MediaCard
+                key={item.id}
+                item={item}
+                onPlay={() => onPlayMedia(item)}
+                onMore={() => setShowPlaylistMenu(showPlaylistMenu === item.id ? null : item.id)}
+                showMenu={showPlaylistMenu === item.id}
+                playlists={playlists}
+                onAddToPlaylist={onAddToPlaylist}
+                onCloseMenu={() => setShowPlaylistMenu(null)}
+                isPro={isPro}
+              />
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+// ==================== MEDIA CARD ====================
+function MediaCard({ item, onPlay, onMore, showMenu, playlists, onAddToPlaylist, onCloseMenu, isPro }: {
+  item: MediaItem;
+  onPlay: () => void;
+  onMore: () => void;
+  showMenu: boolean;
+  playlists: Playlist[];
+  onAddToPlaylist: (pid: string, mid: string) => void;
+  onCloseMenu: () => void;
+  isPro: boolean;
+}) {
+  return (
+    <div className="tv-card tv-focusable overflow-hidden group relative">
+      {/* Thumbnail */}
+      <div
+        className={`relative aspect-video bg-gradient-to-br ${getMediaColor(item.id)} flex items-center justify-center cursor-pointer`}
+        onClick={onPlay}
+      >
+        {item.type === 'video' ? (
+          <Film size={32} className="text-white/80" />
+        ) : (
+          <div className="relative">
+            <Music size={32} className="text-white/80" />
+            <div className="absolute inset-0 animate-spin-slow">
+              <div className="w-12 h-12 rounded-full border-2 border-white/20 border-t-white/80" />
+            </div>
+          </div>
+        )}
+        {/* Duration badge */}
+        <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/70 text-xs text-white font-mono">
+          {item.duration}
+        </div>
+        {/* Type badge */}
+        <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/50 text-xs text-white/80 uppercase">
+          {item.format}
+        </div>
+        {/* Progress bar */}
+        {item.progress && item.progress > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/30">
+            <div className="h-full bg-[#2AABEE]" style={{ width: `${item.progress}%` }} />
+          </div>
+        )}
+        {/* Play overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+          <div className="w-14 h-14 rounded-full bg-[#2AABEE]/90 flex items-center justify-center">
+            <Play size={24} className="text-white ml-1" />
+          </div>
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="p-3">
+        <div className="font-medium text-sm truncate mb-1">{item.title}</div>
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-[var(--tv-muted)] truncate">{item.chatName}</div>
+          <div className="text-xs text-[var(--tv-muted)]">{item.size}</div>
+        </div>
+      </div>
+
+      {/* More button */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onMore(); }}
+        className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+      >
+        <MoreVertical size={14} className="text-white" />
+      </button>
+
+      {/* Playlist menu */}
+      {showMenu && isPro && (
+        <div className="absolute top-10 right-2 z-30 w-56 bg-[var(--tv-surface-2)] border border-[var(--tv-border)] rounded-xl shadow-2xl overflow-hidden animate-scale-in">
+          <div className="p-2 border-b border-[var(--tv-border)]">
+            <div className="text-xs text-[var(--tv-muted)] px-2 py-1">Add to playlist</div>
+          </div>
+          <div className="max-h-48 overflow-y-auto">
+            {playlists.map(p => (
+              <button
+                key={p.id}
+                onClick={() => { onAddToPlaylist(p.id, item.id); onCloseMenu(); }}
+                className="w-full px-3 py-2 text-left text-sm hover:bg-[var(--tv-surface)] transition-colors flex items-center gap-2"
+              >
+                <List size={14} className="text-[var(--tv-muted)]" />
+                {p.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {showMenu && !isPro && (
+        <div className="absolute top-10 right-2 z-30 w-56 bg-[var(--tv-surface-2)] border border-[var(--tv-border)] rounded-xl shadow-2xl p-4 animate-scale-in">
+          <div className="flex items-center gap-2 mb-2">
+            <Crown size={16} className="text-[#6C5CE7]" />
+            <span className="text-sm font-medium">Pro Feature</span>
+          </div>
+          <p className="text-xs text-[var(--tv-muted)]">Add to playlists with Pro</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== PLAYER SCREEN ====================
+function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack, onNext, onPrev }: {
+  media: MediaItem;
+  isPlaying: boolean;
+  progress: number;
+  onTogglePlay: () => void;
+  onSeek: (p: number) => void;
+  onBack: () => void;
+  onNext: () => void;
+  onPrev: () => void;
+}) {
+  const [showControls, setShowControls] = useState(true);
+  const [volume, setVolume] = useState(80);
+  const [isMuted, setIsMuted] = useState(false);
+  const [showSubtitles, setShowSubtitles] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    const handleMouseMove = () => {
+      setShowControls(true);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => setShowControls(false), 4000);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    handleMouseMove();
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  const currentTime = Math.floor((progress / 100) * media.durationSec);
+
+  return (
+    <div className="w-full h-full relative bg-black flex items-center justify-center">
+      {/* Video/Audio Background */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${getMediaColor(media.id)} opacity-20`} />
+      
+      {media.type === 'audio' && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative">
+            <div className={`w-64 h-64 rounded-full bg-gradient-to-br ${getMediaColor(media.id)} opacity-60 ${isPlaying ? 'animate-spin-slow' : ''}`} />
+            <div className="absolute inset-4 rounded-full bg-[var(--tv-bg)] flex items-center justify-center">
+              <Music size={64} className="text-white/60" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {media.type === 'video' && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className={`w-full h-full bg-gradient-to-br ${getMediaColor(media.id)} opacity-30 flex items-center justify-center`}>
+            <Film size={120} className="text-white/10" />
+          </div>
+        </div>
+      )}
+
+      {/* Controls Overlay */}
+      <div className={`absolute inset-0 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+        {/* Top bar */}
+        <div className="absolute top-0 left-0 right-0 p-6 bg-gradient-to-b from-black/80 to-transparent">
+          <div className="flex items-center justify-between">
+            <button onClick={onBack} className="flex items-center gap-3 text-white/80 hover:text-white transition-colors">
+              <ArrowLeft size={24} />
+              <div>
+                <div className="font-medium truncate max-w-md">{media.title}</div>
+                <div className="text-sm text-white/60">{media.chatName}</div>
+              </div>
+            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowSubtitles(!showSubtitles)}
+                className={`p-2 rounded-lg transition-colors ${showSubtitles ? 'bg-[#2AABEE]/30 text-[#2AABEE]' : 'text-white/60 hover:text-white'}`}
+              >
+                <Subtitles size={22} />
+              </button>
+              <button className="p-2 rounded-lg text-white/60 hover:text-white transition-colors">
+                <Maximize2 size={22} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Center controls */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="flex items-center gap-8">
+            <button onClick={onPrev} className="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+              <SkipBack size={24} className="text-white" />
+            </button>
+            <button
+              onClick={onTogglePlay}
+              className="w-20 h-20 rounded-full bg-[#2AABEE] hover:bg-[#2AABEE]/80 flex items-center justify-center transition-all hover:scale-110 shadow-2xl shadow-[#2AABEE]/30"
+            >
+              {isPlaying ? <Pause size={32} className="text-white" /> : <Play size={32} className="text-white ml-1" />}
+            </button>
+            <button onClick={onNext} className="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+              <SkipForward size={24} className="text-white" />
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom bar */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+          {/* Progress bar */}
+          <div className="mb-4">
+            <div
+              className="w-full h-2 bg-white/20 rounded-full cursor-pointer group"
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const p = ((e.clientX - rect.left) / rect.width) * 100;
+                onSeek(Math.max(0, Math.min(100, p)));
+              }}
+            >
+              <div className="h-full bg-[#2AABEE] rounded-full relative transition-all" style={{ width: `${progress}%` }}>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" />
+              </div>
+            </div>
+            <div className="flex justify-between mt-2 text-sm text-white/60">
+              <span>{formatTime(currentTime)}</span>
+              <span>{media.duration}</span>
+            </div>
+          </div>
+
+          {/* Bottom controls */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button onClick={() => setIsMuted(!isMuted)} className="text-white/60 hover:text-white transition-colors">
+                {isMuted ? <VolumeX size={22} /> : <Volume2 size={22} />}
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={isMuted ? 0 : volume}
+                onChange={(e) => { setVolume(Number(e.target.value)); setIsMuted(false); }}
+                className="w-24 accent-[#2AABEE]"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-white/60">{media.format} • {media.size}</span>
+              <button className="text-white/60 hover:text-white transition-colors">
+                <Repeat size={20} />
+              </button>
+              <button className="text-white/60 hover:text-white transition-colors">
+                <Shuffle size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Subtitles overlay */}
+      {showSubtitles && (
+        <div className="absolute bottom-32 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg bg-black/80 text-white text-lg text-center max-w-xl">
+          [Sample subtitle text would appear here]
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== SEARCH SCREEN ====================
+function SearchScreen({ query, onQueryChange, media, onPlayMedia, onBack }: {
+  query: string;
+  onQueryChange: (q: string) => void;
+  media: MediaItem[];
+  onPlayMedia: (m: MediaItem) => void;
+  onBack: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  return (
+    <div className="h-full flex flex-col animate-fade-in">
+      <div className="p-8 pb-4 flex items-center gap-4">
+        <button onClick={onBack} className="tv-button tv-button-secondary !p-3">
+          <ArrowLeft size={20} />
+        </button>
+        <div className="flex-1 relative">
+          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--tv-muted)]" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            placeholder="Search videos, audio, channels..."
+            className="w-full pl-12 pr-5 py-4 rounded-2xl bg-[var(--tv-surface)] border border-[var(--tv-border)] text-white text-lg focus:border-[#2AABEE] focus:outline-none"
+            autoFocus
+          />
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-8 pb-8">
+        {query ? (
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {media.map(item => (
+              <div key={item.id} onClick={() => onPlayMedia(item)} className="tv-card tv-focusable overflow-hidden cursor-pointer group">
+                <div className={`relative aspect-video bg-gradient-to-br ${getMediaColor(item.id)} flex items-center justify-center`}>
+                  {item.type === 'video' ? <Film size={32} className="text-white/80" /> : <Music size={32} className="text-white/80" />}
+                  <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/70 text-xs text-white font-mono">{item.duration}</div>
+                </div>
+                <div className="p-3">
+                  <div className="font-medium text-sm truncate">{item.title}</div>
+                  <div className="text-xs text-[var(--tv-muted)] mt-1">{item.chatName}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20">
+            <Search size={48} className="mx-auto mb-4 text-[var(--tv-muted)] opacity-50" />
+            <p className="text-[var(--tv-muted)] text-lg">Start typing to search your media</p>
+            <p className="text-[var(--tv-muted)] text-sm mt-2">Search by title, channel name, or format</p>
+          </div>
+        )}
+        {query && media.length === 0 && (
+          <div className="text-center py-20">
+            <X size={48} className="mx-auto mb-4 text-[var(--tv-muted)] opacity-50" />
+            <p className="text-[var(--tv-muted)] text-lg">No results for "{query}"</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ==================== PLAYLISTS SCREEN ====================
+function PlaylistsScreen({ playlists, media, onToggleFavorite, onDelete, onPlayMedia, onCreateNew, showCreate, newName, onNewNameChange, onCreate, onCancelCreate, isPro, onShowPaywall }: {
+  playlists: Playlist[];
+  media: MediaItem[];
+  onToggleFavorite: (id: string) => void;
+  onDelete: (id: string) => void;
+  onPlayMedia: (m: MediaItem) => void;
+  onCreateNew: () => void;
+  showCreate: boolean;
+  newName: string;
+  onNewNameChange: (n: string) => void;
+  onCreate: () => void;
+  onCancelCreate: () => void;
+  isPro: boolean;
+  onShowPaywall: () => void;
+}) {
+  const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
+
+  if (!isPro) {
+    return (
+      <div className="h-full flex items-center justify-center animate-fade-in">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#6C5CE7]/20 to-[#2AABEE]/20 flex items-center justify-center mx-auto mb-6">
+            <Crown size={40} className="text-[#6C5CE7]" />
+          </div>
+          <h2 className="text-2xl font-bold mb-3">Playlists are a Pro feature</h2>
+          <p className="text-[var(--tv-muted)] mb-6">Create unlimited playlists, mix video and audio, sort and organize your media.</p>
+          <button onClick={onShowPaywall} className="tv-button tv-button-primary">
+            <Crown size={18} /> Upgrade to Pro
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (selectedPlaylist) {
+    const playlist = playlists.find(p => p.id === selectedPlaylist);
+    const playlistMedia = playlist ? media.filter(m => playlist.items.includes(m.id)) : [];
+
+    return (
+      <div className="h-full flex flex-col animate-slide-in">
+        <div className="p-8 pb-4 flex items-center gap-4">
+          <button onClick={() => setSelectedPlaylist(null)} className="tv-button tv-button-secondary !p-3">
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-2xl font-bold">{playlist?.name}</h2>
+            <p className="text-[var(--tv-muted)]">{playlistMedia.length} items</p>
+          </div>
+          {playlistMedia.length > 0 && (
+            <button
+              onClick={() => onPlayMedia(playlistMedia[0])}
+              className="ml-auto tv-button tv-button-primary"
+            >
+              <Play size={18} /> Play All
+            </button>
+          )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto scrollbar-hide px-8 pb-8">
+          {playlistMedia.length > 0 ? (
+            <div className="space-y-2">
+              {playlistMedia.map((item, idx) => (
+                <div
+                  key={item.id}
+                  onClick={() => onPlayMedia(item)}
+                  className="tv-card tv-focusable p-4 flex items-center gap-4 cursor-pointer"
+                >
+                  <span className="text-[var(--tv-muted)] w-8 text-center">{idx + 1}</span>
+                  <div className={`w-16 h-10 rounded-lg bg-gradient-to-br ${getMediaColor(item.id)} flex items-center justify-center flex-shrink-0`}>
+                    {item.type === 'video' ? <Film size={16} className="text-white/80" /> : <Music size={16} className="text-white/80" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{item.title}</div>
+                    <div className="text-sm text-[var(--tv-muted)]">{item.chatName}</div>
+                  </div>
+                  <div className="text-sm text-[var(--tv-muted)]">{item.duration}</div>
+                  <div className="text-xs text-[var(--tv-muted)] px-2 py-1 rounded bg-[var(--tv-surface-2)]">{item.format}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20 text-[var(--tv-muted)]">
+              <List size={48} className="mx-auto mb-4 opacity-50" />
+              <p>This playlist is empty</p>
+              <p className="text-sm mt-2">Add media from the home screen</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col animate-fade-in">
+      <div className="p-8 pb-4 flex items-center justify-between">
+        <h1 className="text-3xl font-bold flex items-center gap-3">
+          <List size={28} className="text-[#6C5CE7]" /> Playlists
+        </h1>
+        <button onClick={onCreateNew} className="tv-button tv-button-primary">
+          <Plus size={18} /> New Playlist
+        </button>
+      </div>
+
+      {/* Create dialog */}
+      {showCreate && (
+        <div className="px-8 pb-4 animate-scale-in">
+          <div className="tv-card p-6 flex items-center gap-4">
+            <input
+              type="text"
+              value={newName}
+              onChange={(e) => onNewNameChange(e.target.value)}
+              placeholder="Playlist name..."
+              className="flex-1 px-4 py-3 rounded-xl bg-[var(--tv-surface-2)] border border-[var(--tv-border)] text-white focus:border-[#2AABEE] focus:outline-none"
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && onCreate()}
+            />
+            <button onClick={onCreate} className="tv-button tv-button-primary !py-3">
+              <Check size={18} /> Create
+            </button>
+            <button onClick={onCancelCreate} className="tv-button tv-button-secondary !py-3">
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-8 pb-8">
+        {/* Favorites first */}
+        {playlists.filter(p => p.isFavorite).length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-[var(--tv-muted)] mb-3 uppercase tracking-wider">⭐ Favorites</h3>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {playlists.filter(p => p.isFavorite).map(playlist => (
+                <PlaylistCard
+                  key={playlist.id}
+                  playlist={playlist}
+                  media={media}
+                  onClick={() => setSelectedPlaylist(playlist.id)}
+                  onToggleFavorite={() => onToggleFavorite(playlist.id)}
+                  onDelete={() => onDelete(playlist.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* All playlists */}
+        <div>
+          <h3 className="text-sm font-medium text-[var(--tv-muted)] mb-3 uppercase tracking-wider">All Playlists</h3>
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {playlists.filter(p => !p.isFavorite).map(playlist => (
+              <PlaylistCard
+                key={playlist.id}
+                playlist={playlist}
+                media={media}
+                onClick={() => setSelectedPlaylist(playlist.id)}
+                onToggleFavorite={() => onToggleFavorite(playlist.id)}
+                onDelete={() => onDelete(playlist.id)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {playlists.length === 0 && (
+          <div className="text-center py-20 text-[var(--tv-muted)]">
+            <List size={48} className="mx-auto mb-4 opacity-50" />
+            <p>No playlists yet</p>
+            <p className="text-sm mt-2">Create your first playlist to get started</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PlaylistCard({ playlist, media, onClick, onToggleFavorite, onDelete }: {
+  playlist: Playlist;
+  media: MediaItem[];
+  onClick: () => void;
+  onToggleFavorite: () => void;
+  onDelete: () => void;
+}) {
+  const playlistMedia = media.filter(m => playlist.items.includes(m.id));
+  const colors = playlist.items.slice(0, 4).map(id => getMediaColor(id));
+
+  return (
+    <div className="tv-card tv-focusable overflow-hidden group">
+      <div className="aspect-video grid grid-cols-2 gap-0.5 cursor-pointer" onClick={onClick}>
+        {colors.length > 0 ? (
+          colors.concat(colors).slice(0, 4).map((color, i) => (
+            <div key={i} className={`bg-gradient-to-br ${color} flex items-center justify-center`}>
+              {i === 0 && <Film size={16} className="text-white/60" />}
+              {i === 1 && <Music size={16} className="text-white/60" />}
+            </div>
+          ))
+        ) : (
+          <div className="col-span-2 row-span-2 bg-[var(--tv-surface-2)] flex items-center justify-center">
+            <List size={32} className="text-[var(--tv-muted)] opacity-50" />
+          </div>
+        )}
+      </div>
+      <div className="p-3">
+        <div className="flex items-center justify-between">
+          <div className="font-medium text-sm truncate">{playlist.name}</div>
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }} className="p-1 hover:text-[#FFD700] transition-colors">
+              <Heart size={14} className={playlist.isFavorite ? 'fill-[#FFD700] text-[#FFD700]' : ''} />
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 hover:text-red-400 transition-colors">
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </div>
+        <div className="text-xs text-[var(--tv-muted)] mt-1">{playlistMedia.length} items • {playlist.createdAt}</div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== SETTINGS SCREEN ====================
+function SettingsScreen({ isPro, onTogglePro, onShowPaywall, onLogout }: {
+  isPro: boolean;
+  onTogglePro: () => void;
+  onShowPaywall: () => void;
+  onLogout: () => void;
+}) {
+  const [theme, setTheme] = useState<'dark' | 'auto'>('dark');
+
+  return (
+    <div className="h-full overflow-y-auto scrollbar-hide animate-fade-in">
+      <div className="p-8 max-w-3xl">
+        <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
+          <Settings size={28} className="text-[var(--tv-muted)]" /> Settings
+        </h1>
+
+        {/* Account */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-4 text-[var(--tv-muted)]">Account</h2>
+          <div className="tv-card p-5 flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#2AABEE] to-[#6C5CE7] flex items-center justify-center">
+              <User size={24} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <div className="font-medium">Telegram User</div>
+              <div className="text-sm text-[var(--tv-muted)]">@teletv_user</div>
+            </div>
+            <button onClick={onLogout} className="tv-button tv-button-secondary !py-2 !px-4 text-red-400">
+              <LogOut size={16} /> Logout
+            </button>
+          </div>
+        </section>
+
+        {/* Subscription */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-4 text-[var(--tv-muted)]">Subscription</h2>
+          <div className={`tv-card p-5 ${isPro ? 'border-[#2AABEE]/30' : ''}`}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <Crown size={24} className={isPro ? 'text-[#FFD700]' : 'text-[var(--tv-muted)]'} />
+                <div>
+                  <div className="font-medium">{isPro ? 'Pro Active' : 'Free Plan'}</div>
+                  <div className="text-sm text-[var(--tv-muted)]">
+                    {isPro ? 'All features unlocked' : 'Basic features • 7-day trial'}
+                  </div>
+                </div>
+              </div>
+              {!isPro && (
+                <button onClick={onShowPaywall} className="tv-button tv-button-primary !py-2">
+                  <Crown size={16} /> Upgrade
+                </button>
+              )}
+            </div>
+            {isPro && (
+              <div className="flex gap-3">
+                <div className="flex items-center gap-2 text-sm text-green-400">
+                  <Check size={16} /> Playlists
+                </div>
+                <div className="flex items-center gap-2 text-sm text-green-400">
+                  <Check size={16} /> Background Play
+                </div>
+                <div className="flex items-center gap-2 text-sm text-green-400">
+                  <Check size={16} /> Themes
+                </div>
+                <div className="flex items-center gap-2 text-sm text-green-400">
+                  <Check size={16} /> No Ads
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Appearance */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-4 text-[var(--tv-muted)]">Appearance</h2>
+          <div className="tv-card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <Palette size={20} className="text-[var(--tv-muted)]" />
+                <span>Theme</span>
+              </div>
+              <div className="flex gap-2">
+                {(['dark', 'auto'] as const).map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setTheme(t)}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                      theme === t
+                        ? 'bg-[#2AABEE]/20 text-[#2AABEE] border border-[#2AABEE]/30'
+                        : 'bg-[var(--tv-surface-2)] text-[var(--tv-muted)] border border-[var(--tv-border)]'
+                    }`}
+                  >
+                    {t === 'dark' ? '🌙 Dark' : '⚙️ System'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {!isPro && (
+              <div className="text-sm text-[var(--tv-muted)] flex items-center gap-2 mt-2 pt-3 border-t border-[var(--tv-border)]">
+                <Crown size={14} className="text-[#6C5CE7]" />
+                Custom accent colors available in Pro
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Player */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-4 text-[var(--tv-muted)]">Player</h2>
+          <div className="tv-card divide-y divide-[var(--tv-border)]">
+            <div className="p-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Maximize2 size={20} className="text-[var(--tv-muted)]" />
+                <span>Hardware Acceleration</span>
+              </div>
+              <div className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-sm">Enabled</div>
+            </div>
+            <div className="p-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Subtitles size={20} className="text-[var(--tv-muted)]" />
+                <span>Subtitles</span>
+              </div>
+              <div className="px-3 py-1 rounded-full bg-[var(--tv-surface-2)] text-[var(--tv-muted)] text-sm">SRT, ASS, Embedded</div>
+            </div>
+            <div className="p-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Bell size={20} className="text-[var(--tv-muted)]" />
+                <span>Background Audio</span>
+              </div>
+              <div className={`px-3 py-1 rounded-full text-sm ${isPro ? 'bg-green-500/20 text-green-400' : 'bg-[var(--tv-surface-2)] text-[var(--tv-muted)]'}`}>
+                {isPro ? 'Enabled' : 'Pro only'}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* About */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-4 text-[var(--tv-muted)]">About</h2>
+          <div className="tv-card p-5 space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-[var(--tv-muted)]">Version</span>
+              <span>1.1.0</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-[var(--tv-muted)]">Build</span>
+              <span className="font-mono">2026.09.17</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-[var(--tv-muted)]">TDLib Version</span>
+              <span>1.8.32</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-[var(--tv-muted)]">License</span>
+              <span>GPL-3.0</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Debug: Toggle Pro */}
+        <section>
+          <button onClick={onTogglePro} className="tv-button tv-button-secondary w-full justify-center opacity-50 hover:opacity-100">
+            [Dev] Toggle Pro Status
+          </button>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+// ==================== PAYWALL SCREEN ====================
+function PaywallScreen({ onPurchase, onBack }: { onPurchase: () => void; onBack: () => void }) {
+  return (
+    <div className="h-full overflow-y-auto scrollbar-hide animate-fade-in">
+      <div className="p-8 max-w-4xl mx-auto">
+        <button onClick={onBack} className="tv-button tv-button-secondary mb-8">
+          <ArrowLeft size={18} /> Back
+        </button>
+
+        <div className="text-center mb-12">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#2AABEE] to-[#6C5CE7] flex items-center justify-center mx-auto mb-6">
+            <Crown size={40} className="text-white" />
+          </div>
+          <h1 className="text-4xl font-bold mb-3">Upgrade to <span className="gradient-text">Pro</span></h1>
+          <p className="text-xl text-[var(--tv-muted)]">Unlock the full power of TeleTV Player</p>
+        </div>
+
+        {/* Features */}
+        <div className="grid md:grid-cols-2 gap-4 mb-12">
+          {[
+            { icon: <List size={24} />, title: 'Unlimited Playlists', desc: 'Create and manage playlists with video & audio' },
+            { icon: <Music size={24} />, title: 'Background Playback', desc: 'Audio keeps playing when you navigate away' },
+            { icon: <Clock size={24} />, title: 'Watch Progress', desc: 'Resume where you left off on any device' },
+            { icon: <Palette size={24} />, title: 'Custom Themes', desc: 'Personalize colors and appearance' },
+            { icon: <Shield size={24} />, title: 'No Ads', desc: 'Clean, uninterrupted experience' },
+            { icon: <Zap size={24} />, title: 'Early Access', desc: 'Get new features before anyone else' },
+          ].map(f => (
+            <div key={f.title} className="tv-card p-5 flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#2AABEE]/10 flex items-center justify-center text-[#2AABEE] flex-shrink-0">
+                {f.icon}
+              </div>
+              <div>
+                <div className="font-semibold mb-1">{f.title}</div>
+                <div className="text-sm text-[var(--tv-muted)]">{f.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Pricing */}
+        <div className="grid md:grid-cols-2 gap-6 mb-12">
+          <div className="tv-card p-8 text-center border-2 border-[#2AABEE]/30 relative">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#2AABEE] text-white text-xs font-bold">
+              BEST VALUE
+            </div>
+            <h3 className="text-xl font-bold mb-2">Lifetime</h3>
+            <div className="text-4xl font-bold mb-1">$6.99</div>
+            <div className="text-[var(--tv-muted)] mb-6">one-time payment</div>
+            <button onClick={onPurchase} className="w-full tv-button tv-button-primary justify-center">
+              <Crown size={18} /> Buy Now
+            </button>
+          </div>
+          <div className="tv-card p-8 text-center">
+            <h3 className="text-xl font-bold mb-2">Subscription</h3>
+            <div className="text-4xl font-bold mb-1">$1.99<span className="text-lg text-[var(--tv-muted)]">/mo</span></div>
+            <div className="text-[var(--tv-muted)] mb-2">or $19.99/year (save 17%)</div>
+            <div className="text-[var(--tv-muted)] text-sm mb-6">Cancel anytime</div>
+            <button onClick={onPurchase} className="w-full tv-button tv-button-secondary justify-center">
+              Subscribe
+            </button>
+          </div>
+        </div>
+
+        {/* Trust */}
+        <div className="text-center text-sm text-[var(--tv-muted)] space-y-2">
+          <p>✓ 7-day free trial • Cancel anytime • Restore purchases</p>
+          <p>Payment via Google Play Billing or PayPal</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== HELPERS ====================
+function formatTime(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
