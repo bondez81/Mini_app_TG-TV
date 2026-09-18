@@ -14,7 +14,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
-import java.io.File;
 
 public class MainActivity extends Activity {
     
@@ -74,7 +73,6 @@ public class MainActivity extends Activity {
             webSettings.setSupportZoom(true);
             webSettings.setBuiltInZoomControls(false);
             webSettings.setDisplayZoomControls(false);
-            webSettings.setUseWideViewPort(true);
             webSettings.setSupportMultipleWindows(false);
             
             // Разрешаем загрузку скриптов из локальных файлов (решение CORS проблемы)
