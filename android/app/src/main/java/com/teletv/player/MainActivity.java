@@ -29,12 +29,25 @@ public class MainActivity extends Activity {
         Log.i(TAG, "Creating MainActivity");
         
         try {
-            // Fullscreen
+            // Fullscreen and immersive mode for TV
             requestWindowFeature(Window.FEATURE_NO_TITLE);
             getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN
             );
+            
+            // Hide system UI for immersive experience
+            getWindow().getDecorView().setSystemUiVisibility(
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+                | android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            );
+            
+            // Keep screen on
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             
             Log.i(TAG, "Window configured");
             
@@ -44,7 +57,7 @@ public class MainActivity extends Activity {
             
             Log.i(TAG, "WebView created and set as content view");
             
-            // Configure WebView
+            // Configure WebView for TV fullscreen
             WebSettings webSettings = webView.getSettings();
             webSettings.setJavaScriptEnabled(true);
             webSettings.setDomStorageEnabled(true);
@@ -54,10 +67,15 @@ public class MainActivity extends Activity {
             webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
             webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
             webSettings.setDatabaseEnabled(true);
+            
+            // TV-specific WebView settings
             webSettings.setUseWideViewPort(true);
             webSettings.setLoadWithOverviewMode(true);
-            webSettings.setSupportZoom(false);
+            webSettings.setSupportZoom(true);
             webSettings.setBuiltInZoomControls(false);
+            webSettings.setDisplayZoomControls(false);
+            webSettings.setUseWideViewPort(true);
+            webSettings.setSupportMultipleWindows(false);
             
             // Разрешаем загрузку скриптов из локальных файлов (решение CORS проблемы)
             webSettings.setAllowUniversalAccessFromFileURLs(true);
