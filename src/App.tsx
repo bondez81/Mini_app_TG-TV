@@ -630,46 +630,46 @@ function HomeScreen({ chats, user, onSelectChat, onOpenPlaylists, onOpenSettings
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
       <header className="p-3 sm:p-4 pb-2 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#2AABEE] to-[#6C5CE7] flex items-center justify-center">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#2AABEE] to-[#6C5CE7] flex items-center justify-center flex-shrink-0">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" className="w-4 h-4 sm:w-5 sm:h-5">
               <rect x="2" y="3" width="20" height="14" rx="2" />
               <path d="M8 21h8M12 17v4" />
             </svg>
           </div>
-          <div>
-            <div className="font-bold text-xs sm:text-sm">TeleTV Player</div>
-            <div className="text-xs text-gray-500">{user?.firstName || 'User'}</div>
+          <div className="min-w-0">
+            <div className="font-bold text-xs sm:text-sm truncate">TeleTV Player</div>
+            <div className="text-xs text-gray-500 truncate">{user?.firstName || 'User'}</div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={onRefresh} className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl gradient-green hover:opacity-90 transition-opacity shadow-md">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button onClick={onRefresh} className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-[#131920] border border-white/10 hover:bg-[#1a2230] transition-colors">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400">
               <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16" />
             </svg>
           </button>
-          <button onClick={onOpenSettings} className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl gradient-orange hover:opacity-90 transition-opacity shadow-md">
-            <Settings size={14} className="sm:hidden text-white" />
-            <Settings size={16} className="hidden sm:block text-white" />
+          <button onClick={onOpenSettings} className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-[#131920] border border-white/10 hover:bg-[#1a2230] transition-colors">
+            <Settings size={14} className="sm:hidden text-gray-400" />
+            <Settings size={16} className="hidden sm:block text-gray-400" />
           </button>
         </div>
       </header>
 
       {/* Quick Actions */}
       <div className="px-3 sm:px-4 py-2 flex gap-2 flex-shrink-0">
-        <button onClick={onOpenPlaylists} className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl gradient-purple text-xs sm:text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-md">
-          <List size={14} className="sm:hidden text-white" />
-          <List size={16} className="hidden sm:block text-white" />
-          Playlists
+        <button onClick={onOpenPlaylists} className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-[#131920] border border-white/10 text-xs sm:text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#1a2230] transition-colors">
+          <List size={14} className="sm:hidden text-[#6C5CE7]" />
+          <List size={16} className="hidden sm:block text-[#6C5CE7]" />
+          <span className="text-white">Playlists</span>
         </button>
       </div>
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-4 pb-4 scrollable">
-        <h2 className="text-xs sm:text-sm font-semibold gradient-text uppercase tracking-wider mb-3 sm:mb-4 mt-2">
+        <h2 className="text-xs sm:text-sm font-semibold text-[#2AABEE] uppercase tracking-wider mb-3 sm:mb-4 mt-2">
           Chats & Channels
         </h2>
         <div className="space-y-2 sm:space-y-3">
@@ -677,35 +677,37 @@ function HomeScreen({ chats, user, onSelectChat, onOpenPlaylists, onOpenSettings
             <button
               key={chat.id}
               onClick={() => onSelectChat(chat)}
-              className="w-full p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#131920] border border-white/10 flex items-center gap-3 sm:gap-4 hover:bg-[#1a2230] hover:border-[#2AABEE]/30 transition-all text-left active:scale-[0.98] shadow-lg"
+              className="w-full p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#131920] border border-white/10 flex items-center gap-3 sm:gap-4 hover:bg-[#1a2230] hover:border-[#2AABEE]/30 transition-all text-left active:scale-[0.98]"
             >
-              <div className={`w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl ${getGradient(chat.id)} flex items-center justify-center flex-shrink-0 shadow-md`}>
+              <div className={`w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl ${getGradient(chat.id)} flex items-center justify-center flex-shrink-0`}>
                 {chat.type === 'channel' ? (
-                  <Film size={18} className="sm:hidden text-white" />
+                  <>
+                    <Film size={18} className="sm:hidden text-white" />
+                    <Film size={22} className="hidden sm:block text-white" />
+                  </>
                 ) : chat.type === 'saved' ? (
-                  <Star size={18} className="sm:hidden text-white" />
+                  <>
+                    <Star size={18} className="sm:hidden text-white" />
+                    <Star size={22} className="hidden sm:block text-white" />
+                  </>
                 ) : (
-                  <User size={18} className="sm:hidden text-white" />
-                )}
-                {chat.type === 'channel' ? (
-                  <Film size={22} className="hidden sm:block text-white" />
-                ) : chat.type === 'saved' ? (
-                  <Star size={22} className="hidden sm:block text-white" />
-                ) : (
-                  <User size={22} className="hidden sm:block text-white" />
+                  <>
+                    <User size={18} className="sm:hidden text-white" />
+                    <User size={22} className="hidden sm:block text-white" />
+                  </>
                 )}
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-sm sm:text-base truncate">{chat.title}</div>
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="font-semibold text-sm sm:text-base truncate text-white">{chat.title}</div>
                 {chat.lastMessage && (
                   <div className="text-xs sm:text-sm text-gray-400 truncate mt-1">{chat.lastMessage}</div>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className={`text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full font-medium text-white shadow-sm ${
-                  chat.type === 'channel' ? 'gradient-blue' :
-                  chat.type === 'saved' ? 'gradient-orange' :
-                  'gradient-teal'
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <span className={`text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full font-medium ${
+                  chat.type === 'channel' ? 'bg-[#2AABEE]/20 text-[#2AABEE]' :
+                  chat.type === 'saved' ? 'bg-[#FFD700]/20 text-[#FFD700]' :
+                  'bg-[#6C5CE7]/20 text-[#6C5CE7]'
                 }`}>
                   {chat.type}
                 </span>
