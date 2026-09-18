@@ -71,37 +71,45 @@
     background-clip: text;
   }
 
-  /* Colorful gradients for cards */
+  /* Colorful gradients for cards - fixed sizing */
   .gradient-blue {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-size: 100% 100%;
   }
 
   .gradient-purple {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background-size: 100% 100%;
   }
 
   .gradient-green {
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    background-size: 100% 100%;
   }
 
   .gradient-orange {
     background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    background-size: 100% 100%;
   }
 
   .gradient-teal {
     background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+    background-size: 100% 100%;
   }
 
   .gradient-pink {
     background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    background-size: 100% 100%;
   }
 
   .gradient-sunset {
     background: linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%);
+    background-size: 100% 100%;
   }
 
   .gradient-ocean {
     background: linear-gradient(135deg, #2E3192 0%, #1BFFFF 100%);
+    background-size: 100% 100%;
   }
 
   .scrollbar-hide::-webkit-scrollbar {
