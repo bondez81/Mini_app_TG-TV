@@ -270,17 +270,35 @@ export default function App() {
         />
       )}
 
-      {screen === 'player' && currentMedia && (
-        <PlayerScreen
-          media={currentMedia}
-          isPlaying={isPlaying}
-          progress={playProgress}
-          onTogglePlay={() => setIsPlaying(!isPlaying)}
-          onSeek={setPlayProgress}
-          onBack={() => { setScreen('chat'); setIsPlaying(false); }}
-          downloadProgress={downloadProgress}
-          loading={loading}
-        />
+      {screen === 'player' && (
+        currentMedia ? (
+          <PlayerScreen
+            media={currentMedia}
+            isPlaying={isPlaying}
+            progress={playProgress}
+            onTogglePlay={() => setIsPlaying(!isPlaying)}
+            onSeek={setPlayProgress}
+            onBack={() => { setScreen('chat'); setIsPlaying(false); }}
+            downloadProgress={downloadProgress}
+            loading={loading}
+          />
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#0a0e14] to-[#131920] p-6">
+            <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#2AABEE]/20 to-[#6C5CE7]/20 flex items-center justify-center mb-6">
+              <Play size={48} className="text-[#2AABEE]" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-3">Выберите медиа для воспроизведения</h2>
+            <p className="text-gray-400 text-center mb-6 max-w-md">
+              Перейдите в канал или чат, выберите видео или аудио файл для просмотра
+            </p>
+            <button
+              onClick={() => setScreen('home')}
+              className="px-6 py-3 rounded-xl bg-[#2AABEE] text-white font-semibold hover:bg-[#2AABEE]/80 transition-colors"
+            >
+              К списку каналов
+            </button>
+          </div>
+        )
       )}
 
       {screen === 'playlists' && (
@@ -669,38 +687,44 @@ function HomeScreen({ chats, user, onSelectChat, onOpenPlaylists, onOpenSettings
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-4 pb-4 scrollable">
-        <h2 className="text-xs sm:text-sm font-semibold text-[#2AABEE] uppercase tracking-wider mb-3 sm:mb-4 mt-2">
+        <h2 className="text-sm font-bold text-white mb-3 mt-2 flex items-center gap-2">
+          <div className="w-1 h-5 bg-[#2AABEE] rounded-full"></div>
           Chats & Channels
         </h2>
-        <div className="space-y-2 sm:space-y-3">
+        <div className="space-y-2">
           {chats.map((chat) => (
             <button
               key={chat.id}
               onClick={() => onSelectChat(chat)}
-              className="w-full p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#131920] border border-white/10 flex items-center gap-3 sm:gap-4 hover:bg-[#1a2230] hover:border-[#2AABEE]/30 transition-all text-left active:scale-[0.98]"
+              className="w-full p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-[#131920] border border-white/10 flex items-center gap-3 hover:bg-[#1a2230] hover:border-[#2AABEE]/30 transition-all text-left active:scale-[0.98]"
             >
-              <div className={`w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl ${getGradient(chat.id)} flex items-center justify-center flex-shrink-0`}>
-                {chat.type === 'channel' ? (
+              <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl ${getGradient(chat.id)} flex items-center justify-center flex-shrink-0 shadow-lg`}>
+                {chat.title.toLowerCase().includes('music') || chat.title.toLowerCase().includes('музык') ? (
                   <>
-                    <Film size={18} className="sm:hidden text-white" />
-                    <Film size={22} className="hidden sm:block text-white" />
+                    <Music size={20} className="sm:hidden text-white" />
+                    <Music size={24} className="hidden sm:block text-white" />
+                  </>
+                ) : chat.title.toLowerCase().includes('кино') || chat.title.toLowerCase().includes('movie') || chat.title.toLowerCase().includes('film') ? (
+                  <>
+                    <Film size={20} className="sm:hidden text-white" />
+                    <Film size={24} className="hidden sm:block text-white" />
                   </>
                 ) : chat.type === 'saved' ? (
                   <>
-                    <Star size={18} className="sm:hidden text-white" />
-                    <Star size={22} className="hidden sm:block text-white" />
+                    <Star size={20} className="sm:hidden text-white" />
+                    <Star size={24} className="hidden sm:block text-white" />
                   </>
                 ) : (
                   <>
-                    <User size={18} className="sm:hidden text-white" />
-                    <User size={22} className="hidden sm:block text-white" />
+                    <User size={20} className="sm:hidden text-white" />
+                    <User size={24} className="hidden sm:block text-white" />
                   </>
                 )}
               </div>
               <div className="flex-1 min-w-0 overflow-hidden">
-                <div className="font-semibold text-sm sm:text-base truncate text-white">{chat.title}</div>
+                <div className="font-semibold text-sm sm:text-base text-white truncate mb-1">{chat.title}</div>
                 {chat.lastMessage && (
-                  <div className="text-xs sm:text-sm text-gray-400 truncate mt-1">{chat.lastMessage}</div>
+                  <div className="text-xs text-gray-500 truncate">{chat.lastMessage}</div>
                 )}
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
