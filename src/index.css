@@ -49,18 +49,7 @@
     flex-direction: column;
   }
 
-  /* TV-specific responsive styles */
-  @media (min-width: 1280px) {
-    html {
-      font-size: 18px;
-    }
-  }
-
-  @media (min-width: 1920px) {
-    html {
-      font-size: 22px;
-    }
-  }
+  /* TV-friendly: use flexible layout, not font scaling */
 
   input, textarea {
     user-select: auto;
