@@ -2,10 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Play, Pause, SkipForward, SkipBack, Volume2, VolumeX,
   Search, Settings, Home, List, Star, Music, Film, Clock,
-  Plus, Heart, ChevronRight, X, Check,
-  Shield, Crown, Bell, LogOut, Phone, QrCode,
-  Maximize2, Subtitles, MoreVertical,
-  Download, Trash2, ArrowLeft, User, Zap, Loader2, AlertCircle
+  Plus, Heart, ChevronRight, X, Check, Trash2,
+  Shield, LogOut, Phone, ArrowLeft, User, Loader2, AlertCircle, Inbox, Wifi, WifiOff
 } from 'lucide-react';
 import * as tg from './telegram';
 import type { TgChat, TgMedia, TgConfig } from './telegram';
@@ -46,7 +44,6 @@ export default function App() {
 
   // Initialize app
   useEffect(() => {
-    // Try to initialize Telegram WebApp if available
     try {
       const w = window as any;
       if (w.Telegram && w.Telegram.WebApp) {
@@ -54,7 +51,7 @@ export default function App() {
         w.Telegram.WebApp.expand();
       }
     } catch (e) {
-      // Not in Telegram, continue anyway
+      // Not in Telegram
     }
     setIsReady(true);
   }, []);
@@ -67,12 +64,6 @@ export default function App() {
   // Notification
   const showNotification = useCallback((msg: string) => {
     setNotification(msg);
-    try { 
-      const w = window as any;
-      if (w.Telegram && w.Telegram.WebApp) {
-        w.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-      }
-    } catch {}
     setTimeout(() => setNotification(null), 2500);
   }, []);
 
@@ -207,26 +198,7 @@ export default function App() {
 
   // ==================== RENDER ====================
   return (
-    <div className="w-full h-full bg-[var(--tg-theme-bg-color,#0a0e14)] text-[var(--tg-theme-text-color,#e8edf2)] overflow-hidden">
-      {/* Mobile Back Button */}
-      {screen !== 'auth' && screen !== 'player' && (
-        <button
-          onClick={() => {
-            if (screen === 'chat') {
-              setScreen('home');
-              setSelectedChat(null);
-              setMedia([]);
-            } else {
-              setScreen('home');
-            }
-          }}
-          className="fixed top-4 left-4 z-50 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center active:scale-95 transition-transform"
-          aria-label="Назад"
-        >
-          <ArrowLeft size={20} className="text-white" />
-        </button>
-      )}
-
+    <div className="w-full h-full bg-[#0a0e14] text-white overflow-hidden">
       {screen === 'auth' && (
         <AuthScreen
           onAuth={(config, userData) => {
@@ -235,7 +207,6 @@ export default function App() {
             loadChats();
           }}
           loading={loading}
-          loadingText={loadingText}
           error={error}
           onError={setError}
         />
@@ -270,17 +241,21 @@ export default function App() {
         />
       )}
 
-      {screen === 'player' && currentMedia && (
-        <PlayerScreen
-          media={currentMedia}
-          isPlaying={isPlaying}
-          progress={playProgress}
-          onTogglePlay={() => setIsPlaying(!isPlaying)}
-          onSeek={setPlayProgress}
-          onBack={() => { setScreen('chat'); setIsPlaying(false); }}
-          downloadProgress={downloadProgress}
-          loading={loading}
-        />
+      {screen === 'player' && (
+        currentMedia ? (
+          <PlayerScreen
+            media={currentMedia}
+            isPlaying={isPlaying}
+            progress={playProgress}
+            onTogglePlay={() => setIsPlaying(!isPlaying)}
+            onSeek={setPlayProgress}
+            onBack={() => { setScreen('chat'); setIsPlaying(false); }}
+            downloadProgress={downloadProgress}
+            loading={loading}
+          />
+        ) : (
+          <EmptyPlayerScreen onBack={() => setScreen('home')} />
+        )
       )}
 
       {screen === 'playlists' && (
@@ -304,31 +279,33 @@ export default function App() {
 
       {/* Loading overlay */}
       {loading && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
           <div className="text-center">
-            <Loader2 size={40} className="animate-spin text-[#2AABEE] mx-auto mb-4" />
-            <p className="text-sm text-gray-300">{loadingText}</p>
+            <Loader2 size={48} className="animate-spin text-[#229ED9] mx-auto mb-4" />
+            <p className="text-base text-white">{loadingText}</p>
           </div>
         </div>
       )}
 
       {/* Error toast */}
       {error && (
-        <div className="fixed top-4 left-4 right-4 z-50 animate-scale-in">
-          <div className="px-4 py-3 rounded-2xl bg-red-500/90 text-white flex items-center gap-3">
-            <AlertCircle size={18} />
-            <span className="text-sm flex-1">{error}</span>
-            <button onClick={() => setError(null)}><X size={16} /></button>
+        <div className="fixed top-4 left-4 right-4 z-50">
+          <div className="px-4 py-3 rounded-xl bg-red-500 text-white flex items-center gap-3">
+            <AlertCircle size={20} />
+            <span className="text-base flex-1">{error}</span>
+            <button onClick={() => setError(null)} className="min-w-[44px] min-h-[44px] flex items-center justify-center">
+              <X size={20} />
+            </button>
           </div>
         </div>
       )}
 
       {/* Notification */}
       {notification && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-scale-in">
-          <div className="px-5 py-3 rounded-2xl bg-[#2AABEE] text-white font-medium shadow-2xl flex items-center gap-2">
-            <Check size={16} />
-            {notification}
+        <div className="fixed bottom-6 left-4 right-4 z-50">
+          <div className="px-5 py-4 rounded-xl bg-[#229ED9] text-white font-medium flex items-center gap-3">
+            <Check size={20} />
+            <span className="text-base">{notification}</span>
           </div>
         </div>
       )}
@@ -337,10 +314,9 @@ export default function App() {
 }
 
 // ==================== AUTH SCREEN ====================
-function AuthScreen({ onAuth, loading, loadingText, error, onError }: {
+function AuthScreen({ onAuth, loading, error, onError }: {
   onAuth: (config: TgConfig, user: { id: number; firstName: string; username?: string }) => void;
   loading: boolean;
-  loadingText: string;
   error: string | null;
   onError: (e: string | null) => void;
 }) {
@@ -350,7 +326,6 @@ function AuthScreen({ onAuth, loading, loadingText, error, onError }: {
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
-  const [phoneCodeHash, setPhoneCodeHash] = useState('');
   const [localLoading, setLocalLoading] = useState(false);
   const [localError, setLocalError] = useState('');
 
@@ -375,8 +350,7 @@ function AuthScreen({ onAuth, loading, loadingText, error, onError }: {
     
     try {
       const config = tg.getConfig()!;
-      const hash = await tg.sendCode(config, phone);
-      setPhoneCodeHash(hash);
+      await tg.sendCode(config, phone);
       setStep('code');
     } catch (e: any) {
       setLocalError(e.message || 'Failed to send code');
@@ -432,74 +406,63 @@ function AuthScreen({ onAuth, loading, loadingText, error, onError }: {
   };
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 sm:w-96 sm:h-96 bg-[#2AABEE] rounded-full opacity-5 blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 sm:w-96 sm:h-96 bg-[#6C5CE7] rounded-full opacity-5 blur-3xl" />
-      </div>
-
-      <div className="relative z-10 w-full max-w-sm sm:max-w-md lg:max-w-lg animate-fade-in">
+    <div className="w-full h-full flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#2AABEE] to-[#6C5CE7] flex items-center justify-center mx-auto mb-4 sm:mb-5 shadow-2xl shadow-[#2AABEE]/20">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12">
-              <rect x="2" y="3" width="20" height="14" rx="2" />
-              <path d="M8 21h8M12 17v4" />
-            </svg>
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 rounded-2xl bg-[#229ED9] flex items-center justify-center mx-auto mb-4">
+            <Film size={40} className="text-white" />
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-            <span className="gradient-text">TeleTV Player</span>
-          </h1>
-          <p className="text-sm sm:text-base text-gray-400">Watch Telegram media on your TV</p>
+          <h1 className="text-3xl font-bold text-white mb-2">TeleTV Player</h1>
+          <p className="text-base text-gray-400">Watch Telegram media on your TV</p>
         </div>
 
         {/* Error */}
         {(localError || error) && (
-          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2">
-            <AlertCircle size={16} />
-            <span className="text-xs sm:text-sm">{localError || error}</span>
+          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 flex items-center gap-3">
+            <AlertCircle size={20} />
+            <span className="text-base">{localError || error}</span>
           </div>
         )}
 
         {/* Step: Credentials */}
         {step === 'credentials' && (
-          <div className="space-y-3 sm:space-y-4">
-            <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#131920] border border-white/5 mb-3 sm:mb-4">
-              <p className="text-xs sm:text-sm text-gray-400 mb-2">
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-[#131920] border border-white/10">
+              <p className="text-base text-gray-300 mb-3">
                 To connect to Telegram, you need API credentials.
               </p>
-              <a href="https://my.telegram.org/apps" target="_blank" rel="noopener" className="text-xs sm:text-sm text-[#2AABEE] hover:underline flex items-center gap-1">
+              <a href="https://my.telegram.org/apps" target="_blank" rel="noopener" className="text-base text-[#229ED9] hover:underline flex items-center gap-2">
                 Get API ID & Hash →
               </a>
             </div>
             
             <div>
-              <label className="text-xs sm:text-sm text-gray-400 mb-1.5 block">API ID</label>
+              <label className="text-base text-gray-400 mb-2 block">API ID</label>
               <input
                 type="number"
                 value={apiId}
                 onChange={(e) => setApiId(e.target.value)}
                 placeholder="12345678"
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3.5 text-sm sm:text-base rounded-lg sm:rounded-xl bg-[#131920] border border-white/10 text-white focus:border-[#2AABEE] focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-[#131920] border border-white/10 text-white text-base focus:border-[#229ED9] focus:outline-none"
               />
             </div>
             <div>
-              <label className="text-xs sm:text-sm text-gray-400 mb-1.5 block">API Hash</label>
+              <label className="text-base text-gray-400 mb-2 block">API Hash</label>
               <input
                 type="text"
                 value={apiHash}
                 onChange={(e) => setApiHash(e.target.value)}
                 placeholder="0123456789abcdef..."
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3.5 text-sm sm:text-base rounded-lg sm:rounded-xl bg-[#131920] border border-white/10 text-white focus:border-[#2AABEE] focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-[#131920] border border-white/10 text-white text-base focus:border-[#229ED9] focus:outline-none"
               />
             </div>
             <button
               onClick={handleCredentials}
               disabled={localLoading}
-              className="w-full py-2.5 sm:py-3.5 text-sm sm:text-base rounded-lg sm:rounded-xl bg-gradient-to-r from-[#2AABEE] to-[#6C5CE7] text-white font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full py-4 rounded-xl bg-[#229ED9] text-white text-base font-semibold flex items-center justify-center gap-2 min-h-[44px]"
             >
-              {localLoading ? <Loader2 size={16} className="animate-spin" /> : <ChevronRight size={16} />}
+              {localLoading ? <Loader2 size={20} className="animate-spin" /> : <ChevronRight size={20} />}
               Continue
             </button>
           </div>
@@ -507,29 +470,29 @@ function AuthScreen({ onAuth, loading, loadingText, error, onError }: {
 
         {/* Step: Phone */}
         {step === 'phone' && (
-          <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-4">
             <div>
-              <label className="text-xs sm:text-sm text-gray-400 mb-1.5 block">Phone Number (with country code)</label>
+              <label className="text-base text-gray-400 mb-2 block">Phone Number</label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+1234567890"
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3.5 text-base sm:text-lg rounded-lg sm:rounded-xl bg-[#131920] border border-white/10 text-white focus:border-[#2AABEE] focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-[#131920] border border-white/10 text-white text-base focus:border-[#229ED9] focus:outline-none"
                 autoFocus
               />
             </div>
             <button
               onClick={handlePhone}
               disabled={localLoading}
-              className="w-full py-2.5 sm:py-3.5 text-sm sm:text-base rounded-lg sm:rounded-xl bg-gradient-to-r from-[#2AABEE] to-[#6C5CE7] text-white font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full py-4 rounded-xl bg-[#229ED9] text-white text-base font-semibold flex items-center justify-center gap-2 min-h-[44px]"
             >
-              {localLoading ? <Loader2 size={16} className="animate-spin" /> : <Phone size={16} />}
+              {localLoading ? <Loader2 size={20} className="animate-spin" /> : <Phone size={20} />}
               Send Code
             </button>
             <button
               onClick={() => setStep('credentials')}
-              className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-gray-400 hover:text-white transition-colors text-xs sm:text-sm"
+              className="w-full py-4 rounded-xl text-gray-400 text-base min-h-[44px]"
             >
               ← Back
             </button>
@@ -538,62 +501,62 @@ function AuthScreen({ onAuth, loading, loadingText, error, onError }: {
 
         {/* Step: Code */}
         {step === 'code' && (
-          <div className="space-y-3 sm:space-y-4">
-            <p className="text-gray-400 text-center text-xs sm:text-sm">
+          <div className="space-y-4">
+            <p className="text-base text-gray-400 text-center">
               Code sent to <span className="text-white">{phone}</span>
             </p>
             <div>
-              <label className="text-xs sm:text-sm text-gray-400 mb-1.5 block">Verification Code</label>
+              <label className="text-base text-gray-400 mb-2 block">Verification Code</label>
               <input
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="12345"
                 maxLength={6}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl bg-[#131920] border border-white/10 text-white text-xl sm:text-2xl text-center tracking-[0.3em] sm:tracking-[0.5em] focus:border-[#2AABEE] focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-[#131920] border border-white/10 text-white text-2xl text-center tracking-widest focus:border-[#229ED9] focus:outline-none"
                 autoFocus
               />
             </div>
             <button
               onClick={handleCode}
               disabled={localLoading}
-              className="w-full py-2.5 sm:py-3.5 text-sm sm:text-base rounded-lg sm:rounded-xl bg-gradient-to-r from-[#2AABEE] to-[#6C5CE7] text-white font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full py-4 rounded-xl bg-[#229ED9] text-white text-base font-semibold flex items-center justify-center gap-2 min-h-[44px]"
             >
-              {localLoading ? <Loader2 size={16} className="animate-spin" /> : <Shield size={16} />}
+              {localLoading ? <Loader2 size={20} className="animate-spin" /> : <Shield size={20} />}
               Verify
             </button>
             <button
               onClick={() => setStep('phone')}
-              className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-gray-400 hover:text-white transition-colors text-xs sm:text-sm"
+              className="w-full py-4 rounded-xl text-gray-400 text-base min-h-[44px]"
             >
               ← Back
             </button>
           </div>
         )}
 
-        {/* Step: Password (2FA) */}
+        {/* Step: Password */}
         {step === 'password' && (
-          <div className="space-y-3 sm:space-y-4">
-            <p className="text-gray-400 text-center text-xs sm:text-sm">
+          <div className="space-y-4">
+            <p className="text-base text-gray-400 text-center">
               Your account has 2FA enabled
             </p>
             <div>
-              <label className="text-xs sm:text-sm text-gray-400 mb-1.5 block">Cloud Password</label>
+              <label className="text-base text-gray-400 mb-2 block">Cloud Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3.5 text-base sm:text-lg rounded-lg sm:rounded-xl bg-[#131920] border border-white/10 text-white focus:border-[#2AABEE] focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-[#131920] border border-white/10 text-white text-base focus:border-[#229ED9] focus:outline-none"
                 autoFocus
               />
             </div>
             <button
               onClick={handlePassword}
               disabled={localLoading}
-              className="w-full py-2.5 sm:py-3.5 text-sm sm:text-base rounded-lg sm:rounded-xl bg-gradient-to-r from-[#2AABEE] to-[#6C5CE7] text-white font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full py-4 rounded-xl bg-[#229ED9] text-white text-base font-semibold flex items-center justify-center gap-2 min-h-[44px]"
             >
-              {localLoading ? <Loader2 size={16} className="animate-spin" /> : <Shield size={16} />}
+              {localLoading ? <Loader2 size={20} className="animate-spin" /> : <Shield size={20} />}
               Sign In
             </button>
           </div>
@@ -613,119 +576,137 @@ function HomeScreen({ chats, user, onSelectChat, onOpenPlaylists, onOpenSettings
   onRefresh: () => void;
   loading: boolean;
 }) {
-  // Функция для получения градиента на основе ID
-  const getGradient = (id: string) => {
-    const gradients = [
-      'gradient-blue',
-      'gradient-purple', 
-      'gradient-green',
-      'gradient-orange',
-      'gradient-teal',
-      'gradient-pink',
-      'gradient-sunset',
-      'gradient-ocean'
-    ];
-    const index = Math.abs(id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % gradients.length;
-    return gradients[index];
-  };
-
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col">
       {/* Header */}
-      <header className="p-3 sm:p-4 pb-2 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#2AABEE] to-[#6C5CE7] flex items-center justify-center flex-shrink-0">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" className="w-4 h-4 sm:w-5 sm:h-5">
-              <rect x="2" y="3" width="20" height="14" rx="2" />
-              <path d="M8 21h8M12 17v4" />
-            </svg>
+      <header className="p-4 flex items-center justify-between flex-shrink-0 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-[#229ED9] flex items-center justify-center flex-shrink-0">
+            <Film size={24} className="text-white" />
           </div>
-          <div className="min-w-0">
-            <div className="font-bold text-xs sm:text-sm truncate">TeleTV Player</div>
-            <div className="text-xs text-gray-500 truncate">{user?.firstName || 'User'}</div>
+          <div>
+            <div className="text-lg font-bold text-white">TeleTV Player</div>
+            <div className="text-sm text-gray-400">{user?.firstName || 'User'}</div>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button onClick={onRefresh} className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-[#131920] border border-white/10 hover:bg-[#1a2230] transition-colors">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400">
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={onRefresh} 
+            className="w-11 h-11 rounded-xl bg-[#131920] border border-white/10 flex items-center justify-center"
+            aria-label="Refresh"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-gray-400">
               <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16" />
             </svg>
           </button>
-          <button onClick={onOpenSettings} className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-[#131920] border border-white/10 hover:bg-[#1a2230] transition-colors">
-            <Settings size={14} className="sm:hidden text-gray-400" />
-            <Settings size={16} className="hidden sm:block text-gray-400" />
+          <button 
+            onClick={onOpenSettings} 
+            className="w-11 h-11 rounded-xl bg-[#131920] border border-white/10 flex items-center justify-center"
+            aria-label="Settings"
+          >
+            <Settings size={20} className="text-gray-400" />
           </button>
         </div>
       </header>
 
       {/* Quick Actions */}
-      <div className="px-3 sm:px-4 py-2 flex gap-2 flex-shrink-0">
-        <button onClick={onOpenPlaylists} className="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-[#131920] border border-white/10 text-xs sm:text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#1a2230] transition-colors">
-          <List size={14} className="sm:hidden text-[#6C5CE7]" />
-          <List size={16} className="hidden sm:block text-[#6C5CE7]" />
+      <div className="p-4 flex-shrink-0">
+        <button 
+          onClick={onOpenPlaylists} 
+          className="w-full py-4 rounded-xl bg-[#131920] border border-white/10 text-base font-medium flex items-center justify-center gap-3 min-h-[44px]"
+        >
+          <List size={20} className="text-[#229ED9]" />
           <span className="text-white">Playlists</span>
         </button>
       </div>
 
       {/* Chat List */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-4 pb-4 scrollable">
-        <h2 className="text-xs sm:text-sm font-semibold text-[#2AABEE] uppercase tracking-wider mb-3 sm:mb-4 mt-2">
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
+        <h2 className="text-lg font-bold text-white mb-4">
           Chats & Channels
         </h2>
-        <div className="space-y-2 sm:space-y-3">
-          {chats.map((chat) => (
-            <button
-              key={chat.id}
-              onClick={() => onSelectChat(chat)}
-              className="w-full p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#131920] border border-white/10 flex items-center gap-3 sm:gap-4 hover:bg-[#1a2230] hover:border-[#2AABEE]/30 transition-all text-left active:scale-[0.98]"
-            >
-              <div className={`w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl ${getGradient(chat.id)} flex items-center justify-center flex-shrink-0`}>
-                {chat.type === 'channel' ? (
-                  <>
-                    <Film size={18} className="sm:hidden text-white" />
-                    <Film size={22} className="hidden sm:block text-white" />
-                  </>
-                ) : chat.type === 'saved' ? (
-                  <>
-                    <Star size={18} className="sm:hidden text-white" />
-                    <Star size={22} className="hidden sm:block text-white" />
-                  </>
-                ) : (
-                  <>
-                    <User size={18} className="sm:hidden text-white" />
-                    <User size={22} className="hidden sm:block text-white" />
-                  </>
-                )}
-              </div>
-              <div className="flex-1 min-w-0 overflow-hidden">
-                <div className="font-semibold text-sm sm:text-base truncate text-white">{chat.title}</div>
-                {chat.lastMessage && (
-                  <div className="text-xs sm:text-sm text-gray-400 truncate mt-1">{chat.lastMessage}</div>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                <span className={`text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full font-medium ${
-                  chat.type === 'channel' ? 'bg-[#2AABEE]/20 text-[#2AABEE]' :
-                  chat.type === 'saved' ? 'bg-[#FFD700]/20 text-[#FFD700]' :
-                  'bg-[#6C5CE7]/20 text-[#6C5CE7]'
-                }`}>
-                  {chat.type}
-                </span>
-                <ChevronRight size={16} className="sm:hidden text-gray-400" />
-                <ChevronRight size={20} className="hidden sm:block text-gray-400" />
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {chats.length === 0 && !loading && (
-          <div className="text-center py-16 text-gray-500">
-            <Film size={40} className="mx-auto mb-3 opacity-50" />
-            <p className="text-sm">No chats found</p>
-            <p className="text-xs mt-1">Try refreshing</p>
+        
+        {chats.length === 0 && !loading ? (
+          <EmptyState icon={<Inbox size={48} />} title="No chats found" subtitle="Try refreshing" />
+        ) : (
+          <div className="space-y-3">
+            {chats.map((chat) => (
+              <ChatCard key={chat.id} chat={chat} onClick={() => onSelectChat(chat)} />
+            ))}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ==================== CHAT CARD ====================
+function ChatCard({ chat, onClick }: { chat: TgChat; onClick: () => void }) {
+  const getIcon = () => {
+    if (chat.title.toLowerCase().includes('music') || chat.title.toLowerCase().includes('музык')) {
+      return <Music size={24} className="text-white" />;
+    }
+    if (chat.title.toLowerCase().includes('кино') || chat.title.toLowerCase().includes('movie') || chat.title.toLowerCase().includes('film')) {
+      return <Film size={24} className="text-white" />;
+    }
+    if (chat.type === 'saved') {
+      return <Star size={24} className="text-white" />;
+    }
+    return <User size={24} className="text-white" />;
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full p-4 rounded-xl bg-[#131920] border border-white/10 flex items-center gap-4 min-h-[80px]"
+    >
+      <div className="w-14 h-14 rounded-xl bg-[#229ED9]/20 flex items-center justify-center flex-shrink-0">
+        {getIcon()}
+      </div>
+      <div className="flex-1 min-w-0 text-left">
+        <div className="text-base font-semibold text-white truncate mb-1">{chat.title}</div>
+        {chat.lastMessage && (
+          <div className="text-sm text-gray-400 truncate">{chat.lastMessage}</div>
+        )}
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <span className="text-sm px-3 py-1 rounded-full bg-[#229ED9]/20 text-[#229ED9]">
+          {chat.type}
+        </span>
+        <ChevronRight size={20} className="text-gray-400" />
+      </div>
+    </button>
+  );
+}
+
+// ==================== EMPTY STATE ====================
+function EmptyState({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="text-gray-500 mb-4">{icon}</div>
+      <p className="text-base text-gray-400 mb-2">{title}</p>
+      {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+    </div>
+  );
+}
+
+// ==================== EMPTY PLAYER SCREEN ====================
+function EmptyPlayerScreen({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="h-full flex flex-col items-center justify-center p-6">
+      <div className="w-24 h-24 rounded-2xl bg-[#229ED9]/20 flex items-center justify-center mb-6">
+        <Play size={48} className="text-[#229ED9]" />
+      </div>
+      <h2 className="text-2xl font-bold text-white mb-3 text-center">Select media to play</h2>
+      <p className="text-base text-gray-400 text-center mb-6 max-w-md">
+        Go to a channel or chat and select a video or audio file
+      </p>
+      <button
+        onClick={onBack}
+        className="px-6 py-4 rounded-xl bg-[#229ED9] text-white text-base font-semibold min-h-[44px]"
+      >
+        Back to channels
+      </button>
     </div>
   );
 }
@@ -745,129 +726,68 @@ function ChatScreen({ chat, media, allMedia, onBack, onPlay, filter, onFilterCha
   onAddToPlaylist: (pid: string, mid: string) => void;
   loading: boolean;
 }) {
-  const [showPlaylistMenu, setShowPlaylistMenu] = useState<string | null>(null);
-
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <header className="p-4 flex items-center gap-3 flex-shrink-0 border-b border-white/5">
-        <button onClick={onBack} className="p-2 rounded-xl hover:bg-white/5 transition-colors">
-          <ArrowLeft size={20} />
+      <header className="p-4 flex items-center gap-3 flex-shrink-0 border-b border-white/10">
+        <button onClick={onBack} className="w-11 h-11 rounded-xl bg-[#131920] border border-white/10 flex items-center justify-center">
+          <ArrowLeft size={20} className="text-white" />
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="font-bold text-base truncate">{chat.title}</h2>
-          <p className="text-xs text-gray-500">{allMedia.length} media files</p>
+          <h2 className="text-lg font-bold text-white truncate">{chat.title}</h2>
+          <p className="text-sm text-gray-400">{allMedia.length} media files</p>
         </div>
       </header>
 
       {/* Search & Filter */}
-      <div className="p-4 pb-2 flex-shrink-0 space-y-2">
+      <div className="p-4 flex-shrink-0 space-y-3">
         <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-[#131920] border border-white/5 text-sm text-white focus:border-[#2AABEE] focus:outline-none"
+            className="w-full pl-12 pr-4 py-3 rounded-xl bg-[#131920] border border-white/10 text-base text-white focus:border-[#229ED9] focus:outline-none"
           />
           {searchQuery && (
-            <button onClick={() => onSearchChange('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-              <X size={14} />
+            <button onClick={() => onSearchChange('')} className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center">
+              <X size={20} className="text-gray-500" />
             </button>
           )}
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex gap-2">
           {(['all', 'video', 'audio'] as const).map(f => (
             <button
               key={f}
               onClick={() => onFilterChange(f)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`flex-1 py-3 rounded-xl text-base font-medium min-h-[44px] ${
                 filter === f
-                  ? 'bg-[#2AABEE]/20 text-[#2AABEE] border border-[#2AABEE]/30'
-                  : 'bg-[#131920] text-gray-400 border border-white/5'
+                  ? 'bg-[#229ED9] text-white'
+                  : 'bg-[#131920] text-gray-400 border border-white/10'
               }`}
             >
-              {f === 'all' ? '📁 All' : f === 'video' ? '🎬 Video' : '🎵 Audio'}
+              {f === 'all' ? 'All' : f === 'video' ? 'Video' : 'Audio'}
             </button>
           ))}
         </div>
       </div>
 
       {/* Media Grid */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 scrollable">
-        <div className="grid grid-cols-2 gap-3">
-          {media.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => onPlay(item)}
-              className="rounded-xl overflow-hidden bg-[#131920] border border-white/5 hover:border-[#2AABEE]/20 transition-all text-left active:scale-[0.97] relative group"
-            >
-              {/* Thumbnail */}
-              <div className={`aspect-video bg-gradient-to-br ${getMediaColor(item.id)} flex items-center justify-center relative`}>
-                {item.type === 'video' ? (
-                  <Film size={28} className="text-white/60" />
-                ) : (
-                  <Music size={28} className="text-white/60" />
-                )}
-                {item.duration && (
-                  <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/70 text-[10px] text-white font-mono">
-                    {tg.formatDuration(item.duration)}
-                  </div>
-                )}
-                <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/50 text-[10px] text-white/80 uppercase">
-                  {item.mimeType.split('/')[1]?.substring(0, 4) || item.type}
-                </div>
-                {/* Play overlay */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <div className="w-10 h-10 rounded-full bg-[#2AABEE]/90 flex items-center justify-center">
-                    <Play size={18} className="text-white ml-0.5" />
-                  </div>
-                </div>
-              </div>
-              {/* Info */}
-              <div className="p-2.5">
-                <div className="text-xs font-medium truncate">{item.fileName}</div>
-                <div className="text-[10px] text-gray-500 mt-0.5">{tg.formatSize(item.size)}</div>
-              </div>
-              
-              {/* Add to playlist button */}
-              {playlists.length > 0 && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowPlaylistMenu(showPlaylistMenu === item.id ? null : item.id); }}
-                  className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Plus size={12} className="text-white" />
-                </button>
-              )}
-              
-              {/* Playlist menu */}
-              {showPlaylistMenu === item.id && (
-                <div className="absolute top-8 right-2 z-20 w-40 bg-[#1a2230] border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-scale-in">
-                  <div className="p-2 border-b border-white/5">
-                    <div className="text-[10px] text-gray-500 px-1">Add to playlist</div>
-                  </div>
-                  <div className="max-h-32 overflow-y-auto">
-                    {playlists.map(p => (
-                      <button
-                        key={p.id}
-                        onClick={(e) => { e.stopPropagation(); onAddToPlaylist(p.id, item.id); setShowPlaylistMenu(null); }}
-                        className="w-full px-3 py-2 text-left text-xs hover:bg-white/5 transition-colors truncate"
-                      >
-                        {p.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {media.length === 0 && !loading && (
-          <div className="text-center py-16 text-gray-500">
-            <Film size={40} className="mx-auto mb-3 opacity-50" />
-            <p className="text-sm">No media found</p>
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
+        {media.length === 0 && !loading ? (
+          <EmptyState icon={<Film size={48} />} title="No media found" />
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {media.map((item) => (
+              <MediaCard
+                key={item.id}
+                item={item}
+                onClick={() => onPlay(item)}
+                playlists={playlists}
+                onAddToPlaylist={onAddToPlaylist}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -875,80 +795,70 @@ function ChatScreen({ chat, media, allMedia, onBack, onPlay, filter, onFilterCha
   );
 }
 
-// ==================== AUDIO VISUALIZER ====================
-function AudioVisualizer({ isPlaying, audioContext }: { isPlaying: boolean; audioContext: AudioContext | null }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
-  const analyserRef = useRef<AnalyserNode | null>(null);
-
-  useEffect(() => {
-    if (!audioContext || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Создаём анализатор
-    const analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
-    analyserRef.current = analyser;
-
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    const draw = () => {
-      animationRef.current = requestAnimationFrame(draw);
-
-      analyser.getByteFrequencyData(dataArray);
-
-      // Очистка canvas
-      ctx.fillStyle = 'rgba(10, 14, 20, 0.2)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const barWidth = (canvas.width / bufferLength) * 2.5;
-      let x = 0;
-
-      for (let i = 0; i < bufferLength; i++) {
-        const barHeight = (dataArray[i] / 255) * canvas.height;
-
-        // Градиент для каждого бара
-        const gradient = ctx.createLinearGradient(0, canvas.height - barHeight, 0, canvas.height);
-        gradient.addColorStop(0, '#667eea');
-        gradient.addColorStop(0.5, '#764ba2');
-        gradient.addColorStop(1, '#f093fb');
-
-        ctx.fillStyle = gradient;
-        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-
-        x += barWidth + 1;
-      }
-    };
-
-    if (isPlaying) {
-      draw();
-    } else {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-      // Рисуем статичную визуализацию когда пауза
-      ctx.fillStyle = 'rgba(10, 14, 20, 1)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [isPlaying, audioContext]);
+// ==================== MEDIA CARD ====================
+function MediaCard({ item, onClick, playlists, onAddToPlaylist }: {
+  item: TgMedia;
+  onClick: () => void;
+  playlists: Playlist[];
+  onAddToPlaylist: (pid: string, mid: string) => void;
+}) {
+  const [showMenu, setShowMenu] = useState(false);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={400}
-      height={200}
-      className="w-full max-w-md h-32 rounded-2xl"
-    />
+    <button
+      onClick={onClick}
+      className="rounded-xl overflow-hidden bg-[#131920] border border-white/10 text-left relative"
+    >
+      {/* Thumbnail */}
+      <div className="aspect-video bg-[#1a2230] flex items-center justify-center relative">
+        {item.type === 'video' ? (
+          <Film size={32} className="text-gray-500" />
+        ) : (
+          <Music size={32} className="text-gray-500" />
+        )}
+        {item.duration && (
+          <div className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/70 text-sm text-white font-mono">
+            {tg.formatDuration(item.duration)}
+          </div>
+        )}
+      </div>
+      
+      {/* Info */}
+      <div className="p-3">
+        <div className="text-sm font-medium text-white truncate mb-1">{item.fileName}</div>
+        <div className="text-xs text-gray-500">{tg.formatSize(item.size)}</div>
+      </div>
+      
+      {/* Add to playlist button */}
+      {playlists.length > 0 && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center"
+        >
+          <Plus size={16} className="text-white" />
+        </button>
+      )}
+      
+      {/* Playlist menu */}
+      {showMenu && (
+        <div className="absolute top-12 right-2 z-20 w-48 bg-[#1a2230] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+          <div className="p-2 border-b border-white/10">
+            <div className="text-xs text-gray-500 px-2">Add to playlist</div>
+          </div>
+          <div className="max-h-48 overflow-y-auto">
+            {playlists.map(p => (
+              <button
+                key={p.id}
+                onClick={(e) => { e.stopPropagation(); onAddToPlaylist(p.id, item.id); setShowMenu(false); }}
+                className="w-full px-3 py-3 text-left text-sm text-white hover:bg-white/5 truncate"
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </button>
   );
 }
 
@@ -965,52 +875,10 @@ function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const oscillatorRef = useRef<OscillatorNode | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(80);
   const [isMuted, setIsMuted] = useState(false);
-
-  // Инициализация Web Audio API для демо-звука
-  useEffect(() => {
-    if (media.type === 'audio' && isPlaying) {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      }
-
-      const ctx = audioContextRef.current;
-      
-      // Создаём осциллятор для генерации тестового звука
-      if (!oscillatorRef.current) {
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(440, ctx.currentTime); // A4 note
-        
-        gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        
-        oscillatorRef.current = oscillator;
-        oscillator.start();
-      }
-    } else {
-      if (oscillatorRef.current) {
-        oscillatorRef.current.stop();
-        oscillatorRef.current = null;
-      }
-    }
-
-    return () => {
-      if (oscillatorRef.current) {
-        oscillatorRef.current.stop();
-        oscillatorRef.current = null;
-      }
-    };
-  }, [isPlaying, media.type]);
 
   useEffect(() => {
     const el = media.type === 'video' ? videoRef.current : audioRef.current;
@@ -1018,11 +886,9 @@ function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack
 
     const handleTimeUpdate = () => setCurrentTime(el.currentTime);
     const handleLoadedMetadata = () => setDuration(el.duration);
-    const handleEnded = () => onTogglePlay();
 
     el.addEventListener('timeupdate', handleTimeUpdate);
     el.addEventListener('loadedmetadata', handleLoadedMetadata);
-    el.addEventListener('ended', handleEnded);
 
     if (isPlaying) {
       el.play().catch(() => {});
@@ -1033,7 +899,6 @@ function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack
     return () => {
       el.removeEventListener('timeupdate', handleTimeUpdate);
       el.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      el.removeEventListener('ended', handleEnded);
     };
   }, [isPlaying, media]);
 
@@ -1054,20 +919,16 @@ function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack
 
   const progressPercent = duration ? (currentTime / duration) * 100 : (downloadProgress ? (downloadProgress.loaded / downloadProgress.total) * 100 : 0);
 
-  // Download progress
   if (loading && downloadProgress) {
     return (
       <div className="h-full flex items-center justify-center bg-black">
         <div className="text-center">
-          <Loader2 size={48} className="animate-spin text-[#2AABEE] mx-auto mb-4" />
-          <p className="text-sm text-gray-300 mb-2">Downloading...</p>
-          <div className="w-48 h-2 rounded-full bg-white/10 overflow-hidden mx-auto">
-            <div
-              className="h-full bg-[#2AABEE] transition-all"
-              style={{ width: `${progressPercent}%` }}
-            />
+          <Loader2 size={48} className="animate-spin text-[#229ED9] mx-auto mb-4" />
+          <p className="text-base text-white mb-2">Downloading...</p>
+          <div className="w-64 h-2 rounded-full bg-white/10 overflow-hidden mx-auto mb-2">
+            <div className="h-full bg-[#229ED9]" style={{ width: `${progressPercent}%` }} />
           </div>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-sm text-gray-400">
             {tg.formatSize(downloadProgress.loaded)} / {tg.formatSize(downloadProgress.total)}
           </p>
         </div>
@@ -1076,7 +937,7 @@ function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack
   }
 
   return (
-    <div className="h-full flex flex-col bg-black relative">
+    <div className="h-full flex flex-col bg-black">
       {/* Media element */}
       {media.type === 'video' ? (
         <video
@@ -1087,39 +948,30 @@ function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack
           playsInline
         />
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-[#131920] via-[#0a0e14] to-[#1a1a2e] p-6">
-          {/* Аудио-визуализатор */}
-          <div className="w-full max-w-md mb-8">
-            <AudioVisualizer isPlaying={isPlaying} audioContext={audioContextRef.current} />
+        <div className="flex-1 flex flex-col items-center justify-center bg-[#0a0e14] p-6">
+          <div className="w-48 h-48 rounded-2xl bg-[#229ED9]/20 flex items-center justify-center mb-6">
+            <Music size={80} className="text-[#229ED9]" />
           </div>
-
-          {/* Информация о треке */}
-          <div className="text-center mb-8">
-            <div className={`w-32 h-32 rounded-3xl ${getMediaColor(media.id)} mx-auto mb-6 flex items-center justify-center shadow-2xl`}>
-              <Music size={48} className="text-white" />
-            </div>
-            <h3 className="text-xl font-bold px-6 truncate max-w-sm mb-2">{media.fileName}</h3>
-            <p className="text-sm text-gray-400">{media.chatTitle}</p>
-          </div>
-
-          <audio
-            ref={audioRef}
-            src={media.fileName}
-            autoPlay={isPlaying}
-          />
+          <h3 className="text-xl font-bold text-white px-6 truncate max-w-sm mb-2 text-center">{media.fileName}</h3>
+          <p className="text-base text-gray-400">{media.chatTitle}</p>
+          <audio ref={audioRef} src={media.fileName} autoPlay={isPlaying} />
         </div>
       )}
 
       {/* Controls */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 pt-12">
+      <div className="bg-black/90 p-4">
+        {/* Title */}
+        <div className="mb-4">
+          <h3 className="text-lg font-bold text-white truncate">{media.fileName}</h3>
+          <p className="text-sm text-gray-400">{media.chatTitle}</p>
+        </div>
+
         {/* Progress */}
-        <div className="mb-3">
-          <div className="w-full h-1.5 bg-white/20 rounded-full cursor-pointer" onClick={handleSeek}>
-            <div className="h-full bg-[#2AABEE] rounded-full relative" style={{ width: `${progressPercent}%` }}>
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-lg" />
-            </div>
+        <div className="mb-4">
+          <div className="w-full h-2 bg-white/20 rounded-full cursor-pointer" onClick={handleSeek}>
+            <div className="h-full bg-[#229ED9] rounded-full" style={{ width: `${progressPercent}%` }} />
           </div>
-          <div className="flex justify-between mt-1.5 text-xs text-white/60">
+          <div className="flex justify-between mt-2 text-sm text-gray-400">
             <span>{tg.formatDuration(currentTime)}</span>
             <span>{tg.formatDuration(duration || media.duration || 0)}</span>
           </div>
@@ -1127,28 +979,28 @@ function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack
 
         {/* Buttons */}
         <div className="flex items-center justify-between">
-          <button onClick={onBack} className="p-2 text-white/60 hover:text-white">
-            <ArrowLeft size={22} />
+          <button onClick={onBack} className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center">
+            <ArrowLeft size={20} className="text-white" />
           </button>
           
-          <div className="flex items-center gap-6">
-            <button className="p-2 text-white/60 hover:text-white">
-              <SkipBack size={22} />
+          <div className="flex items-center gap-4">
+            <button className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center">
+              <SkipBack size={20} className="text-white" />
             </button>
             <button
               onClick={onTogglePlay}
-              className="w-14 h-14 rounded-full bg-[#2AABEE] flex items-center justify-center hover:bg-[#2AABEE]/80 transition-colors"
+              className="w-14 h-14 rounded-full bg-[#229ED9] flex items-center justify-center"
             >
-              {isPlaying ? <Pause size={24} className="text-white" /> : <Play size={24} className="text-white ml-0.5" />}
+              {isPlaying ? <Pause size={28} className="text-white" /> : <Play size={28} className="text-white ml-1" />}
             </button>
-            <button className="p-2 text-white/60 hover:text-white">
-              <SkipForward size={22} />
+            <button className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center">
+              <SkipForward size={20} className="text-white" />
             </button>
           </div>
 
           <div className="flex items-center gap-2">
-            <button onClick={() => setIsMuted(!isMuted)} className="p-2 text-white/60 hover:text-white">
-              {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+            <button onClick={() => setIsMuted(!isMuted)} className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center">
+              {isMuted ? <VolumeX size={20} className="text-white" /> : <Volume2 size={20} className="text-white" />}
             </button>
             <input
               type="range"
@@ -1156,7 +1008,7 @@ function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack
               max="100"
               value={isMuted ? 0 : volume}
               onChange={(e) => { setVolume(Number(e.target.value)); setIsMuted(false); }}
-              className="w-16 accent-[#2AABEE]"
+              className="w-24"
             />
           </div>
         </div>
@@ -1179,28 +1031,28 @@ function PlaylistsScreen({ playlists, media, onToggleFavorite, onDelete, onCreat
 
   return (
     <div className="h-full flex flex-col">
-      <header className="p-4 flex items-center gap-3 flex-shrink-0 border-b border-white/5">
-        <button onClick={onBack} className="p-2 rounded-xl hover:bg-white/5">
-          <ArrowLeft size={20} />
+      <header className="p-4 flex items-center gap-3 flex-shrink-0 border-b border-white/10">
+        <button onClick={onBack} className="w-11 h-11 rounded-xl bg-[#131920] border border-white/10 flex items-center justify-center">
+          <ArrowLeft size={20} className="text-white" />
         </button>
-        <h2 className="font-bold text-lg flex-1">Playlists</h2>
+        <h2 className="text-lg font-bold text-white flex-1">Playlists</h2>
         <button
           onClick={() => setShowCreate(true)}
-          className="p-2 rounded-xl bg-[#2AABEE]/20 text-[#2AABEE] hover:bg-[#2AABEE]/30"
+          className="w-11 h-11 rounded-xl bg-[#229ED9] flex items-center justify-center"
         >
-          <Plus size={20} />
+          <Plus size={20} className="text-white" />
         </button>
       </header>
 
       {showCreate && (
-        <div className="p-4 border-b border-white/5 animate-scale-in">
+        <div className="p-4 border-b border-white/10">
           <div className="flex gap-2">
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Playlist name..."
-              className="flex-1 px-3 py-2.5 rounded-xl bg-[#131920] border border-white/10 text-sm text-white focus:border-[#2AABEE] focus:outline-none"
+              className="flex-1 px-4 py-3 rounded-xl bg-[#131920] border border-white/10 text-base text-white focus:border-[#229ED9] focus:outline-none"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && newName.trim()) {
@@ -1212,46 +1064,42 @@ function PlaylistsScreen({ playlists, media, onToggleFavorite, onDelete, onCreat
             />
             <button
               onClick={() => { if (newName.trim()) { onCreate(newName); setNewName(''); setShowCreate(false); } }}
-              className="px-4 py-2.5 rounded-xl bg-[#2AABEE] text-white text-sm font-medium"
+              className="px-4 py-3 rounded-xl bg-[#229ED9] text-white"
             >
-              <Check size={16} />
+              <Check size={20} />
             </button>
             <button
               onClick={() => { setShowCreate(false); setNewName(''); }}
-              className="px-3 py-2.5 rounded-xl bg-white/5 text-gray-400"
+              className="px-4 py-3 rounded-xl bg-white/10 text-gray-400"
             >
-              <X size={16} />
+              <X size={20} />
             </button>
           </div>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 scrollable">
-        {playlists.length > 0 ? (
-          <div className="space-y-2">
+      <div className="flex-1 overflow-y-auto p-4">
+        {playlists.length === 0 ? (
+          <EmptyState icon={<List size={48} />} title="No playlists yet" subtitle="Create your first playlist" />
+        ) : (
+          <div className="space-y-3">
             {playlists.map(p => (
-              <div key={p.id} className="p-4 rounded-xl bg-[#131920] border border-white/5 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#6C5CE7]/20 to-[#2AABEE]/20 flex items-center justify-center">
-                  <List size={18} className="text-[#6C5CE7]" />
+              <div key={p.id} className="p-4 rounded-xl bg-[#131920] border border-white/10 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-[#229ED9]/20 flex items-center justify-center">
+                  <List size={24} className="text-[#229ED9]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">{p.name}</div>
-                  <div className="text-xs text-gray-500">{p.items.length} items • {p.createdAt}</div>
+                  <div className="text-base font-medium text-white truncate">{p.name}</div>
+                  <div className="text-sm text-gray-400">{p.items.length} items • {p.createdAt}</div>
                 </div>
-                <button onClick={() => onToggleFavorite(p.id)} className="p-2">
-                  <Heart size={16} className={p.isFavorite ? 'fill-[#FFD700] text-[#FFD700]' : 'text-gray-500'} />
+                <button onClick={() => onToggleFavorite(p.id)} className="w-11 h-11 flex items-center justify-center">
+                  <Heart size={20} className={p.isFavorite ? 'fill-[#FFD700] text-[#FFD700]' : 'text-gray-500'} />
                 </button>
-                <button onClick={() => onDelete(p.id)} className="p-2 text-gray-500 hover:text-red-400">
-                  <Trash2 size={16} />
+                <button onClick={() => onDelete(p.id)} className="w-11 h-11 flex items-center justify-center">
+                  <Trash2 size={20} className="text-gray-500" />
                 </button>
               </div>
             ))}
-          </div>
-        ) : (
-          <div className="text-center py-16 text-gray-500">
-            <List size={40} className="mx-auto mb-3 opacity-50" />
-            <p className="text-sm">No playlists yet</p>
-            <p className="text-xs mt-1">Create your first playlist</p>
           </div>
         )}
       </div>
@@ -1267,100 +1115,56 @@ function SettingsScreen({ user, onBack, onLogout }: {
 }) {
   return (
     <div className="h-full flex flex-col">
-      <header className="p-4 flex items-center gap-3 flex-shrink-0 border-b border-white/5">
-        <button onClick={onBack} className="p-2 rounded-xl hover:bg-white/5">
-          <ArrowLeft size={20} />
+      <header className="p-4 flex items-center gap-3 flex-shrink-0 border-b border-white/10">
+        <button onClick={onBack} className="w-11 h-11 rounded-xl bg-[#131920] border border-white/10 flex items-center justify-center">
+          <ArrowLeft size={20} className="text-white" />
         </button>
-        <h2 className="font-bold text-lg">Settings</h2>
+        <h2 className="text-lg font-bold text-white">Settings</h2>
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Account */}
-        <div className="p-4 rounded-xl bg-[#131920] border border-white/5">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#2AABEE] to-[#6C5CE7] flex items-center justify-center">
-              <User size={20} className="text-white" />
+        <div className="p-4 rounded-xl bg-[#131920] border border-white/10">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-[#229ED9] flex items-center justify-center">
+              <User size={24} className="text-white" />
             </div>
             <div>
-              <div className="font-medium">{user?.firstName || 'User'}</div>
-              <div className="text-sm text-gray-500">{user?.username ? `@${user.username}` : `ID: ${user?.id}`}</div>
+              <div className="text-base font-medium text-white">{user?.firstName || 'User'}</div>
+              <div className="text-sm text-gray-400">{user?.username ? `@${user.username}` : `ID: ${user?.id}`}</div>
             </div>
           </div>
         </div>
 
         {/* Info */}
-        <div className="p-4 rounded-xl bg-[#131920] border border-white/5 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">About</h3>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Version</span>
-            <span>1.1.0</span>
+        <div className="p-4 rounded-xl bg-[#131920] border border-white/10 space-y-3">
+          <h3 className="text-base font-semibold text-gray-400 uppercase">About</h3>
+          <div className="flex justify-between text-base">
+            <span className="text-gray-400">Version</span>
+            <span className="text-white">1.1.0</span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Platform</span>
-            <span>Telegram Mini App</span>
+          <div className="flex justify-between text-base">
+            <span className="text-gray-400">Platform</span>
+            <span className="text-white">Telegram Mini App</span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Protocol</span>
-            <span className="font-mono text-xs">MTProto 2.0</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">License</span>
-            <span>GPL-3.0</span>
-          </div>
-        </div>
-
-        {/* Features */}
-        <div className="p-4 rounded-xl bg-[#131920] border border-white/5 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Features</h3>
-          <div className="flex items-center gap-2 text-sm">
-            <Check size={14} className="text-green-400" /> Video playback
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Check size={14} className="text-green-400" /> Audio playback
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Check size={14} className="text-green-400" /> Playlists
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Check size={14} className="text-green-400" /> Direct Telegram connection
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Check size={14} className="text-green-400" /> No server required
+          <div className="flex justify-between text-base">
+            <span className="text-gray-400">License</span>
+            <span className="text-white">GPL-3.0</span>
           </div>
         </div>
 
         {/* Logout */}
         <button
           onClick={onLogout}
-          className="w-full py-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-medium flex items-center justify-center gap-2 hover:bg-red-500/20 transition-colors"
+          className="w-full py-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-base font-medium flex items-center justify-center gap-3 min-h-[44px]"
         >
-          <LogOut size={18} /> Sign Out
+          <LogOut size={20} /> Sign Out
         </button>
 
-        <p className="text-center text-xs text-gray-600 pb-4">
+        <p className="text-center text-sm text-gray-500 pb-4">
           TeleTV Player © 2026
         </p>
       </div>
     </div>
   );
-}
-
-// ==================== HELPERS ====================
-function getMediaColor(id: string): string {
-  const colors = [
-    'from-blue-600 to-purple-600',
-    'from-emerald-600 to-teal-600',
-    'from-orange-600 to-red-600',
-    'from-pink-600 to-rose-600',
-    'from-cyan-600 to-blue-600',
-    'from-violet-600 to-indigo-600',
-    'from-amber-600 to-orange-600',
-    'from-green-600 to-emerald-600',
-  ];
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = ((hash << 5) - hash) + id.charCodeAt(i);
-    hash |= 0;
-  }
-  return colors[Math.abs(hash) % colors.length];
 }
