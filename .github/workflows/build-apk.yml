@@ -1,0 +1,148 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v5
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '8.0'
+
+    - name: Install Android SDK components
+      run: |
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+    - name: Install npm dependencies
+      run: npm install
+
+    - name: Build web app
+      run: npm run build
+
+    - name: Copy web assets to Android
+      run: |
+        echo "=== Checking dist folder ==="
+        ls -la dist/
+        echo ""
+        echo "=== Creating assets directory ==="
+        mkdir -p android/app/src/main/assets
+        echo ""
+        echo "=== Copying files ==="
+        cp -r dist/* android/app/src/main/assets/
+        echo ""
+        echo "=== Verifying assets ==="
+        ls -la android/app/src/main/assets/
+        echo ""
+        echo "=== Checking files ==="
+        if [ -f android/app/src/main/assets/index.html ]; then
+          echo "✅ index.html exists"
+        else
+          echo "❌ index.html NOT FOUND"
+          exit 1
+        fi
+    - name: Build Debug APK
+      if: startsWith(github.ref, 'refs/tags/') == false
+      working-directory: android
+      run: gradle assembleDebug --no-daemon --stacktrace
+
+    - name: Build Release APK
+      if: startsWith(github.ref, 'refs/tags/')
+      working-directory: android
+      run: gradle assembleRelease --no-daemon --stacktrace
+
+    - name: Verify APK output
+      run: |
+        echo "=== Looking for APK files ==="
+        find android/app/build -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
+        
+        if [ -f "android/app/build/outputs/apk/debug/app-debug.apk" ]; then
+          echo "✅ Debug APK found!"
+          ls -lh android/app/build/outputs/apk/debug/
+        elif [ -f "android/app/build/outputs/apk/release/app-release.apk" ]; then
+          echo "✅ Release APK found!"
+          ls -lh android/app/build/outputs/apk/release/
+        else
+          echo "❌ No APK found!"
+          exit 1
+        fi
+
+    - name: Upload Debug APK artifact
+      if: startsWith(github.ref, 'refs/tags/') == false
+      uses: actions/upload-artifact@v4
+      with:
+        name: TeleTV-Player-debug
+        path: android/app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 30
+
+    - name: Prepare release APK
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        cp android/app/build/outputs/apk/release/app-release.apk TeleTV-Player-${{ github.ref_name }}.apk
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: TeleTV-Player-${{ github.ref_name }}.apk
+        name: TeleTV Player ${{ github.ref_name }}
+        body: |
+          ## TeleTV Player ${{ github.ref_name }}
+          
+          ### 📥 Installation
+          1. Download the APK file below
+          2. Enable "Install from unknown sources" on your Android TV
+          3. Install the APK
+          
+          ### 📱 Requirements
+          - Android 8.0+ (API 26)
+          - Android TV / Google TV / Fire TV
+          
+          ### ✨ Features
+          - Telegram MTProto integration
+          - Video & Audio playback
+          - Playlists
+          - TV-optimized UI with D-pad navigation
+          
+          ### 🔧 Setup
+          1. Get API credentials from https://my.telegram.org/apps
+          2. Open the app and enter your API ID & Hash
+          3. Sign in with your phone number
+          
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Release APK artifact
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-artifact@v4
+      with:
+        name: TeleTV-Player-release
+        path: android/app/build/outputs/apk/release/app-release.apk
+        retention-days: 90
