@@ -1,12 +1,52 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Play, Pause, SkipForward, SkipBack, Volume2, VolumeX,
-  Search, Settings, Home, List, Star, Music, Film, Clock,
+  Search, Settings, List, Star, Music, Film,
   Plus, Heart, ChevronRight, X, Check, Trash2,
-  Shield, LogOut, Phone, ArrowLeft, User, Loader2, AlertCircle, Inbox, Wifi, WifiOff
+  Shield, LogOut, Phone, ArrowLeft, User, Loader2, AlertCircle, Inbox
 } from 'lucide-react';
 import * as tg from './telegram';
 import type { TgChat, TgMedia, TgConfig } from './telegram';
+
+// ==================== DESIGN TOKENS ====================
+const tokens = {
+  colors: {
+    primary: '#229ED9',
+    background: '#0a0e14',
+    surface: '#131920',
+    border: 'rgba(255, 255, 255, 0.1)',
+    text: {
+      primary: '#ffffff',
+      secondary: '#9ca3af',
+      muted: '#6b7280'
+    },
+    error: '#ef4444',
+    success: '#10b981'
+  },
+  spacing: {
+    xs: '4px',
+    sm: '8px',
+    md: '12px',
+    lg: '16px',
+    xl: '20px',
+    '2xl': '24px',
+    '3xl': '32px'
+  },
+  radius: {
+    sm: '8px',
+    md: '12px',
+    lg: '16px',
+    xl: '20px'
+  },
+  typography: {
+    xs: '12px',
+    sm: '14px',
+    base: '16px',
+    lg: '18px',
+    xl: '20px',
+    '2xl': '24px'
+  }
+};
 
 // ==================== TYPES ====================
 type Screen = 'auth' | 'home' | 'chat' | 'player' | 'playlists' | 'settings';
@@ -42,7 +82,6 @@ export default function App() {
   const [downloadProgress, setDownloadProgress] = useState<{ loaded: number; total: number } | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
 
-  // Initialize app
   useEffect(() => {
     try {
       const w = window as any;
@@ -50,24 +89,19 @@ export default function App() {
         w.Telegram.WebApp.ready();
         w.Telegram.WebApp.expand();
       }
-    } catch (e) {
-      // Not in Telegram
-    }
+    } catch (e) {}
     setIsReady(true);
   }, []);
 
-  // Load playlists
   useEffect(() => {
     localStorage.setItem('teletv_playlists', JSON.stringify(playlists));
   }, [playlists]);
 
-  // Notification
   const showNotification = useCallback((msg: string) => {
     setNotification(msg);
     setTimeout(() => setNotification(null), 2500);
   }, []);
 
-  // Check if already authorized
   useEffect(() => {
     if (!isReady) return;
     
@@ -91,7 +125,6 @@ export default function App() {
     }
   }, [isReady]);
 
-  // Load chats
   const loadChats = async () => {
     setLoading(true);
     setLoadingText('Loading chats...');
@@ -104,7 +137,6 @@ export default function App() {
     setLoading(false);
   };
 
-  // Load media from chat
   const loadMedia = async (chat: TgChat) => {
     setSelectedChat(chat);
     setScreen('chat');
@@ -119,7 +151,6 @@ export default function App() {
     setLoading(false);
   };
 
-  // Play media
   const playMedia = async (item: TgMedia) => {
     setCurrentMedia(item);
     setScreen('player');
@@ -150,7 +181,6 @@ export default function App() {
     setDownloadProgress(null);
   };
 
-  // Playlist operations
   const createPlaylist = (name: string) => {
     const newPlaylist: Playlist = {
       id: `p${Date.now()}`,
@@ -179,7 +209,6 @@ export default function App() {
     showNotification('Playlist deleted');
   };
 
-  // Logout
   const logout = () => {
     tg.disconnect();
     tg.clearSession();
@@ -189,16 +218,14 @@ export default function App() {
     setScreen('auth');
   };
 
-  // Filtered media
   const filteredMedia = media.filter(m => {
     const matchesFilter = mediaFilter === 'all' || m.type === mediaFilter;
     const matchesSearch = !searchQuery || m.fileName.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
-  // ==================== RENDER ====================
   return (
-    <div className="w-full h-full bg-[#0a0e14] text-white overflow-hidden">
+    <div style={{ width: '100%', height: '100%', background: tokens.colors.background, color: tokens.colors.text.primary, overflow: 'hidden' }}>
       {screen === 'auth' && (
         <AuthScreen
           onAuth={(config, userData) => {
@@ -261,7 +288,6 @@ export default function App() {
       {screen === 'playlists' && (
         <PlaylistsScreen
           playlists={playlists}
-          media={media}
           onToggleFavorite={toggleFavorite}
           onDelete={deletePlaylist}
           onCreate={createPlaylist}
@@ -277,35 +303,32 @@ export default function App() {
         />
       )}
 
-      {/* Loading overlay */}
       {loading && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 size={48} className="animate-spin text-[#229ED9] mx-auto mb-4" />
-            <p className="text-base text-white">{loadingText}</p>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <Loader2 size={48} className="animate-spin" style={{ color: tokens.colors.primary, margin: '0 auto 16px' }} />
+            <p style={{ fontSize: tokens.typography.base, color: tokens.colors.text.primary }}>{loadingText}</p>
           </div>
         </div>
       )}
 
-      {/* Error toast */}
       {error && (
-        <div className="fixed top-4 left-4 right-4 z-50">
-          <div className="px-4 py-3 rounded-xl bg-red-500 text-white flex items-center gap-3">
+        <div style={{ position: 'fixed', top: '16px', left: '16px', right: '16px', zIndex: 50 }}>
+          <div style={{ padding: '16px', borderRadius: tokens.radius.md, background: tokens.colors.error, color: tokens.colors.text.primary, display: 'flex', alignItems: 'center', gap: '12px' }}>
             <AlertCircle size={20} />
-            <span className="text-base flex-1">{error}</span>
-            <button onClick={() => setError(null)} className="min-w-[44px] min-h-[44px] flex items-center justify-center">
+            <span style={{ fontSize: tokens.typography.base, flex: 1 }}>{error}</span>
+            <button onClick={() => setError(null)} style={{ minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <X size={20} />
             </button>
           </div>
         </div>
       )}
 
-      {/* Notification */}
       {notification && (
-        <div className="fixed bottom-6 left-4 right-4 z-50">
-          <div className="px-5 py-4 rounded-xl bg-[#229ED9] text-white font-medium flex items-center gap-3">
+        <div style={{ position: 'fixed', bottom: '24px', left: '16px', right: '16px', zIndex: 50 }}>
+          <div style={{ padding: '16px 20px', borderRadius: tokens.radius.md, background: tokens.colors.primary, color: tokens.colors.text.primary, fontWeight: 500, display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Check size={20} />
-            <span className="text-base">{notification}</span>
+            <span style={{ fontSize: tokens.typography.base }}>{notification}</span>
           </div>
         </div>
       )}
@@ -406,61 +429,58 @@ function AuthScreen({ onAuth, loading, error, onError }: {
   };
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-2xl bg-[#229ED9] flex items-center justify-center mx-auto mb-4">
-            <Film size={40} className="text-white" />
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: tokens.spacing['2xl'] }}>
+      <div style={{ width: '100%', maxWidth: '400px' }}>
+        <div style={{ textAlign: 'center', marginBottom: tokens.spacing['3xl'] }}>
+          <div style={{ width: '80px', height: '80px', borderRadius: tokens.radius.lg, background: tokens.colors.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <Film size={40} color={tokens.colors.text.primary} />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">TeleTV Player</h1>
-          <p className="text-base text-gray-400">Watch Telegram media on your TV</p>
+          <h1 style={{ fontSize: tokens.typography['2xl'], fontWeight: 700, color: tokens.colors.text.primary, marginBottom: tokens.spacing.sm }}>TeleTV Player</h1>
+          <p style={{ fontSize: tokens.typography.base, color: tokens.colors.text.secondary }}>Watch Telegram media on your TV</p>
         </div>
 
-        {/* Error */}
         {(localError || error) && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 flex items-center gap-3">
+          <div style={{ marginBottom: tokens.spacing['2xl'], padding: '16px', borderRadius: tokens.radius.md, background: 'rgba(239, 68, 68, 0.1)', border: `1px solid ${tokens.colors.error}30`, color: tokens.colors.error, display: 'flex', alignItems: 'center', gap: '12px' }}>
             <AlertCircle size={20} />
-            <span className="text-base">{localError || error}</span>
+            <span style={{ fontSize: tokens.typography.base }}>{localError || error}</span>
           </div>
         )}
 
-        {/* Step: Credentials */}
         {step === 'credentials' && (
-          <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-[#131920] border border-white/10">
-              <p className="text-base text-gray-300 mb-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.lg }}>
+            <div style={{ padding: '16px', borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}` }}>
+              <p style={{ fontSize: tokens.typography.base, color: tokens.colors.text.secondary, marginBottom: '12px' }}>
                 To connect to Telegram, you need API credentials.
               </p>
-              <a href="https://my.telegram.org/apps" target="_blank" rel="noopener" className="text-base text-[#229ED9] hover:underline flex items-center gap-2">
+              <a href="https://my.telegram.org/apps" target="_blank" rel="noopener" style={{ fontSize: tokens.typography.base, color: tokens.colors.primary, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 Get API ID & Hash →
               </a>
             </div>
             
             <div>
-              <label className="text-base text-gray-400 mb-2 block">API ID</label>
+              <label style={{ fontSize: tokens.typography.base, color: tokens.colors.text.secondary, marginBottom: '8px', display: 'block' }}>API ID</label>
               <input
                 type="number"
                 value={apiId}
                 onChange={(e) => setApiId(e.target.value)}
                 placeholder="12345678"
-                className="w-full px-4 py-3 rounded-xl bg-[#131920] border border-white/10 text-white text-base focus:border-[#229ED9] focus:outline-none"
+                style={{ width: '100%', padding: '12px 16px', borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, color: tokens.colors.text.primary, fontSize: tokens.typography.base, outline: 'none' }}
               />
             </div>
             <div>
-              <label className="text-base text-gray-400 mb-2 block">API Hash</label>
+              <label style={{ fontSize: tokens.typography.base, color: tokens.colors.text.secondary, marginBottom: '8px', display: 'block' }}>API Hash</label>
               <input
                 type="text"
                 value={apiHash}
                 onChange={(e) => setApiHash(e.target.value)}
                 placeholder="0123456789abcdef..."
-                className="w-full px-4 py-3 rounded-xl bg-[#131920] border border-white/10 text-white text-base focus:border-[#229ED9] focus:outline-none"
+                style={{ width: '100%', padding: '12px 16px', borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, color: tokens.colors.text.primary, fontSize: tokens.typography.base, outline: 'none' }}
               />
             </div>
             <button
               onClick={handleCredentials}
               disabled={localLoading}
-              className="w-full py-4 rounded-xl bg-[#229ED9] text-white text-base font-semibold flex items-center justify-center gap-2 min-h-[44px]"
+              style={{ width: '100%', padding: '16px', borderRadius: tokens.radius.md, background: tokens.colors.primary, color: tokens.colors.text.primary, fontSize: tokens.typography.base, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '44px', border: 'none', cursor: 'pointer' }}
             >
               {localLoading ? <Loader2 size={20} className="animate-spin" /> : <ChevronRight size={20} />}
               Continue
@@ -468,93 +488,90 @@ function AuthScreen({ onAuth, loading, error, onError }: {
           </div>
         )}
 
-        {/* Step: Phone */}
         {step === 'phone' && (
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.lg }}>
             <div>
-              <label className="text-base text-gray-400 mb-2 block">Phone Number</label>
+              <label style={{ fontSize: tokens.typography.base, color: tokens.colors.text.secondary, marginBottom: '8px', display: 'block' }}>Phone Number</label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+1234567890"
-                className="w-full px-4 py-3 rounded-xl bg-[#131920] border border-white/10 text-white text-base focus:border-[#229ED9] focus:outline-none"
+                style={{ width: '100%', padding: '12px 16px', borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, color: tokens.colors.text.primary, fontSize: tokens.typography.base, outline: 'none' }}
                 autoFocus
               />
             </div>
             <button
               onClick={handlePhone}
               disabled={localLoading}
-              className="w-full py-4 rounded-xl bg-[#229ED9] text-white text-base font-semibold flex items-center justify-center gap-2 min-h-[44px]"
+              style={{ width: '100%', padding: '16px', borderRadius: tokens.radius.md, background: tokens.colors.primary, color: tokens.colors.text.primary, fontSize: tokens.typography.base, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '44px', border: 'none', cursor: 'pointer' }}
             >
               {localLoading ? <Loader2 size={20} className="animate-spin" /> : <Phone size={20} />}
               Send Code
             </button>
             <button
               onClick={() => setStep('credentials')}
-              className="w-full py-4 rounded-xl text-gray-400 text-base min-h-[44px]"
+              style={{ width: '100%', padding: '16px', borderRadius: tokens.radius.md, color: tokens.colors.text.secondary, fontSize: tokens.typography.base, minHeight: '44px', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               ← Back
             </button>
           </div>
         )}
 
-        {/* Step: Code */}
         {step === 'code' && (
-          <div className="space-y-4">
-            <p className="text-base text-gray-400 text-center">
-              Code sent to <span className="text-white">{phone}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.lg }}>
+            <p style={{ fontSize: tokens.typography.base, color: tokens.colors.text.secondary, textAlign: 'center' }}>
+              Code sent to <span style={{ color: tokens.colors.text.primary }}>{phone}</span>
             </p>
             <div>
-              <label className="text-base text-gray-400 mb-2 block">Verification Code</label>
+              <label style={{ fontSize: tokens.typography.base, color: tokens.colors.text.secondary, marginBottom: '8px', display: 'block' }}>Verification Code</label>
               <input
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="12345"
                 maxLength={6}
-                className="w-full px-4 py-3 rounded-xl bg-[#131920] border border-white/10 text-white text-2xl text-center tracking-widest focus:border-[#229ED9] focus:outline-none"
+                style={{ width: '100%', padding: '12px 16px', borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, color: tokens.colors.text.primary, fontSize: tokens.typography.xl, textAlign: 'center', letterSpacing: '0.5em', outline: 'none' }}
                 autoFocus
               />
             </div>
             <button
               onClick={handleCode}
               disabled={localLoading}
-              className="w-full py-4 rounded-xl bg-[#229ED9] text-white text-base font-semibold flex items-center justify-center gap-2 min-h-[44px]"
+              style={{ width: '100%', padding: '16px', borderRadius: tokens.radius.md, background: tokens.colors.primary, color: tokens.colors.text.primary, fontSize: tokens.typography.base, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '44px', border: 'none', cursor: 'pointer' }}
             >
               {localLoading ? <Loader2 size={20} className="animate-spin" /> : <Shield size={20} />}
               Verify
             </button>
             <button
               onClick={() => setStep('phone')}
-              className="w-full py-4 rounded-xl text-gray-400 text-base min-h-[44px]"
+              style={{ width: '100%', padding: '16px', borderRadius: tokens.radius.md, color: tokens.colors.text.secondary, fontSize: tokens.typography.base, minHeight: '44px', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               ← Back
             </button>
           </div>
         )}
 
-        {/* Step: Password */}
         {step === 'password' && (
-          <div className="space-y-4">
-            <p className="text-base text-gray-400 text-center">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.lg }}>
+            <p style={{ fontSize: tokens.typography.base, color: tokens.colors.text.secondary, textAlign: 'center' }}>
               Your account has 2FA enabled
             </p>
             <div>
-              <label className="text-base text-gray-400 mb-2 block">Cloud Password</label>
+              <label style={{ fontSize: tokens.typography.base, color: tokens.colors.text.secondary, marginBottom: '8px', display: 'block' }}>Cloud Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl bg-[#131920] border border-white/10 text-white text-base focus:border-[#229ED9] focus:outline-none"
+                style={{ width: '100%', padding: '12px 16px', borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, color: tokens.colors.text.primary, fontSize: tokens.typography.base, outline: 'none' }}
                 autoFocus
               />
             </div>
             <button
               onClick={handlePassword}
               disabled={localLoading}
-              className="w-full py-4 rounded-xl bg-[#229ED9] text-white text-base font-semibold flex items-center justify-center gap-2 min-h-[44px]"
+              style={{ width: '100%', padding: '16px', borderRadius: tokens.radius.md, background: tokens.colors.primary, color: tokens.colors.text.primary, fontSize: tokens.typography.base, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '44px', border: 'none', cursor: 'pointer' }}
             >
               {localLoading ? <Loader2 size={20} className="animate-spin" /> : <Shield size={20} />}
               Sign In
@@ -577,59 +594,56 @@ function HomeScreen({ chats, user, onSelectChat, onOpenPlaylists, onOpenSettings
   loading: boolean;
 }) {
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <header className="p-4 flex items-center justify-between flex-shrink-0 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-[#229ED9] flex items-center justify-center flex-shrink-0">
-            <Film size={24} className="text-white" />
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <header style={{ padding: tokens.spacing.lg, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, borderBottom: `1px solid ${tokens.colors.border}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.md }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: tokens.radius.md, background: tokens.colors.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Film size={24} color={tokens.colors.text.primary} />
           </div>
           <div>
-            <div className="text-lg font-bold text-white">TeleTV Player</div>
-            <div className="text-sm text-gray-400">{user?.firstName || 'User'}</div>
+            <div style={{ fontSize: tokens.typography.lg, fontWeight: 700, color: tokens.colors.text.primary }}>TeleTV Player</div>
+            <div style={{ fontSize: tokens.typography.sm, color: tokens.colors.text.secondary }}>{user?.firstName || 'User'}</div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.sm }}>
           <button 
             onClick={onRefresh} 
-            className="w-11 h-11 rounded-xl bg-[#131920] border border-white/10 flex items-center justify-center"
+            style={{ width: '44px', height: '44px', borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
             aria-label="Refresh"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-gray-400">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '20px', height: '20px', color: tokens.colors.text.secondary }}>
               <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16" />
             </svg>
           </button>
           <button 
             onClick={onOpenSettings} 
-            className="w-11 h-11 rounded-xl bg-[#131920] border border-white/10 flex items-center justify-center"
+            style={{ width: '44px', height: '44px', borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
             aria-label="Settings"
           >
-            <Settings size={20} className="text-gray-400" />
+            <Settings size={20} color={tokens.colors.text.secondary} />
           </button>
         </div>
       </header>
 
-      {/* Quick Actions */}
-      <div className="p-4 flex-shrink-0">
+      <div style={{ padding: tokens.spacing.lg, flexShrink: 0 }}>
         <button 
           onClick={onOpenPlaylists} 
-          className="w-full py-4 rounded-xl bg-[#131920] border border-white/10 text-base font-medium flex items-center justify-center gap-3 min-h-[44px]"
+          style={{ width: '100%', padding: '16px', borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, fontSize: tokens.typography.base, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', minHeight: '44px', cursor: 'pointer', color: tokens.colors.text.primary }}
         >
-          <List size={20} className="text-[#229ED9]" />
-          <span className="text-white">Playlists</span>
+          <List size={20} color={tokens.colors.primary} />
+          <span>Playlists</span>
         </button>
       </div>
 
-      {/* Chat List */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
-        <h2 className="text-lg font-bold text-white mb-4">
+      <div style={{ flex: 1, overflowY: 'auto', padding: `0 ${tokens.spacing.lg} ${tokens.spacing.lg}` }}>
+        <h2 style={{ fontSize: tokens.typography.lg, fontWeight: 700, color: tokens.colors.text.primary, marginBottom: tokens.spacing.lg }}>
           Chats & Channels
         </h2>
         
         {chats.length === 0 && !loading ? (
           <EmptyState icon={<Inbox size={48} />} title="No chats found" subtitle="Try refreshing" />
         ) : (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.md }}>
             {chats.map((chat) => (
               <ChatCard key={chat.id} chat={chat} onClick={() => onSelectChat(chat)} />
             ))}
@@ -644,36 +658,36 @@ function HomeScreen({ chats, user, onSelectChat, onOpenPlaylists, onOpenSettings
 function ChatCard({ chat, onClick }: { chat: TgChat; onClick: () => void }) {
   const getIcon = () => {
     if (chat.title.toLowerCase().includes('music') || chat.title.toLowerCase().includes('музык')) {
-      return <Music size={24} className="text-white" />;
+      return <Music size={24} color={tokens.colors.text.primary} />;
     }
     if (chat.title.toLowerCase().includes('кино') || chat.title.toLowerCase().includes('movie') || chat.title.toLowerCase().includes('film')) {
-      return <Film size={24} className="text-white" />;
+      return <Film size={24} color={tokens.colors.text.primary} />;
     }
     if (chat.type === 'saved') {
-      return <Star size={24} className="text-white" />;
+      return <Star size={24} color={tokens.colors.text.primary} />;
     }
-    return <User size={24} className="text-white" />;
+    return <User size={24} color={tokens.colors.text.primary} />;
   };
 
   return (
     <button
       onClick={onClick}
-      className="w-full p-4 rounded-xl bg-[#131920] border border-white/10 flex items-center gap-4 min-h-[80px]"
+      style={{ width: '100%', padding: tokens.spacing.lg, borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, display: 'flex', alignItems: 'center', gap: tokens.spacing.lg, minHeight: '80px', cursor: 'pointer', textAlign: 'left' }}
     >
-      <div className="w-14 h-14 rounded-xl bg-[#229ED9]/20 flex items-center justify-center flex-shrink-0">
+      <div style={{ width: '56px', height: '56px', borderRadius: tokens.radius.md, background: `${tokens.colors.primary}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         {getIcon()}
       </div>
-      <div className="flex-1 min-w-0 text-left">
-        <div className="text-base font-semibold text-white truncate mb-1">{chat.title}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: tokens.typography.base, fontWeight: 600, color: tokens.colors.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }}>{chat.title}</div>
         {chat.lastMessage && (
-          <div className="text-sm text-gray-400 truncate">{chat.lastMessage}</div>
+          <div style={{ fontSize: tokens.typography.sm, color: tokens.colors.text.secondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chat.lastMessage}</div>
         )}
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <span className="text-sm px-3 py-1 rounded-full bg-[#229ED9]/20 text-[#229ED9]">
+      <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.sm, flexShrink: 0 }}>
+        <span style={{ fontSize: tokens.typography.sm, padding: '4px 12px', borderRadius: '999px', background: `${tokens.colors.primary}20`, color: tokens.colors.primary }}>
           {chat.type}
         </span>
-        <ChevronRight size={20} className="text-gray-400" />
+        <ChevronRight size={20} color={tokens.colors.text.secondary} />
       </div>
     </button>
   );
@@ -682,10 +696,10 @@ function ChatCard({ chat, onClick }: { chat: TgChat; onClick: () => void }) {
 // ==================== EMPTY STATE ====================
 function EmptyState({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="text-gray-500 mb-4">{icon}</div>
-      <p className="text-base text-gray-400 mb-2">{title}</p>
-      {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 0', textAlign: 'center' }}>
+      <div style={{ color: tokens.colors.text.muted, marginBottom: tokens.spacing.lg }}>{icon}</div>
+      <p style={{ fontSize: tokens.typography.base, color: tokens.colors.text.secondary, marginBottom: tokens.spacing.sm }}>{title}</p>
+      {subtitle && <p style={{ fontSize: tokens.typography.sm, color: tokens.colors.text.muted }}>{subtitle}</p>}
     </div>
   );
 }
@@ -693,17 +707,17 @@ function EmptyState({ icon, title, subtitle }: { icon: React.ReactNode; title: s
 // ==================== EMPTY PLAYER SCREEN ====================
 function EmptyPlayerScreen({ onBack }: { onBack: () => void }) {
   return (
-    <div className="h-full flex flex-col items-center justify-center p-6">
-      <div className="w-24 h-24 rounded-2xl bg-[#229ED9]/20 flex items-center justify-center mb-6">
-        <Play size={48} className="text-[#229ED9]" />
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: tokens.spacing['2xl'] }}>
+      <div style={{ width: '96px', height: '96px', borderRadius: tokens.radius.lg, background: `${tokens.colors.primary}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: tokens.spacing['2xl'] }}>
+        <Play size={48} color={tokens.colors.primary} />
       </div>
-      <h2 className="text-2xl font-bold text-white mb-3 text-center">Select media to play</h2>
-      <p className="text-base text-gray-400 text-center mb-6 max-w-md">
+      <h2 style={{ fontSize: tokens.typography.xl, fontWeight: 700, color: tokens.colors.text.primary, marginBottom: tokens.spacing.md, textAlign: 'center' }}>Select media to play</h2>
+      <p style={{ fontSize: tokens.typography.base, color: tokens.colors.text.secondary, textAlign: 'center', marginBottom: tokens.spacing['2xl'], maxWidth: '400px' }}>
         Go to a channel or chat and select a video or audio file
       </p>
       <button
         onClick={onBack}
-        className="px-6 py-4 rounded-xl bg-[#229ED9] text-white text-base font-semibold min-h-[44px]"
+        style={{ padding: '16px 24px', borderRadius: tokens.radius.md, background: tokens.colors.primary, color: tokens.colors.text.primary, fontSize: tokens.typography.base, fontWeight: 600, minHeight: '44px', border: 'none', cursor: 'pointer' }}
       >
         Back to channels
       </button>
@@ -727,45 +741,39 @@ function ChatScreen({ chat, media, allMedia, onBack, onPlay, filter, onFilterCha
   loading: boolean;
 }) {
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <header className="p-4 flex items-center gap-3 flex-shrink-0 border-b border-white/10">
-        <button onClick={onBack} className="w-11 h-11 rounded-xl bg-[#131920] border border-white/10 flex items-center justify-center">
-          <ArrowLeft size={20} className="text-white" />
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <header style={{ padding: tokens.spacing.lg, display: 'flex', alignItems: 'center', gap: tokens.spacing.md, flexShrink: 0, borderBottom: `1px solid ${tokens.colors.border}` }}>
+        <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <ArrowLeft size={20} color={tokens.colors.text.primary} />
         </button>
-        <div className="flex-1 min-w-0">
-          <h2 className="text-lg font-bold text-white truncate">{chat.title}</h2>
-          <p className="text-sm text-gray-400">{allMedia.length} media files</p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h2 style={{ fontSize: tokens.typography.lg, fontWeight: 700, color: tokens.colors.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chat.title}</h2>
+          <p style={{ fontSize: tokens.typography.sm, color: tokens.colors.text.secondary }}>{allMedia.length} media files</p>
         </div>
       </header>
 
-      {/* Search & Filter */}
-      <div className="p-4 flex-shrink-0 space-y-3">
-        <div className="relative">
-          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+      <div style={{ padding: tokens.spacing.lg, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: tokens.spacing.md }}>
+        <div style={{ position: 'relative' }}>
+          <Search size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: tokens.colors.text.muted }} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search..."
-            className="w-full pl-12 pr-4 py-3 rounded-xl bg-[#131920] border border-white/10 text-base text-white focus:border-[#229ED9] focus:outline-none"
+            style={{ width: '100%', paddingLeft: '48px', paddingRight: '16px', padding: '12px 16px 12px 48px', borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, fontSize: tokens.typography.base, color: tokens.colors.text.primary, outline: 'none' }}
           />
           {searchQuery && (
-            <button onClick={() => onSearchChange('')} className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center">
-              <X size={20} className="text-gray-500" />
+            <button onClick={() => onSearchChange('')} style={{ position: 'absolute', right: '4px', top: '50%', transform: 'translateY(-50%)', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}>
+              <X size={20} color={tokens.colors.text.muted} />
             </button>
           )}
         </div>
-        <div className="flex gap-2">
+        <div style={{ display: 'flex', gap: tokens.spacing.sm }}>
           {(['all', 'video', 'audio'] as const).map(f => (
             <button
               key={f}
               onClick={() => onFilterChange(f)}
-              className={`flex-1 py-3 rounded-xl text-base font-medium min-h-[44px] ${
-                filter === f
-                  ? 'bg-[#229ED9] text-white'
-                  : 'bg-[#131920] text-gray-400 border border-white/10'
-              }`}
+              style={{ flex: 1, padding: '12px', borderRadius: tokens.radius.md, fontSize: tokens.typography.base, fontWeight: 500, minHeight: '44px', background: filter === f ? tokens.colors.primary : tokens.colors.surface, color: filter === f ? tokens.colors.text.primary : tokens.colors.text.secondary, border: filter === f ? 'none' : `1px solid ${tokens.colors.border}`, cursor: 'pointer' }}
             >
               {f === 'all' ? 'All' : f === 'video' ? 'Video' : 'Audio'}
             </button>
@@ -773,12 +781,11 @@ function ChatScreen({ chat, media, allMedia, onBack, onPlay, filter, onFilterCha
         </div>
       </div>
 
-      {/* Media Grid */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
+      <div style={{ flex: 1, overflowY: 'auto', padding: `0 ${tokens.spacing.lg} ${tokens.spacing.lg}` }}>
         {media.length === 0 && !loading ? (
           <EmptyState icon={<Film size={48} />} title="No media found" />
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: tokens.spacing.md }}>
             {media.map((item) => (
               <MediaCard
                 key={item.id}
@@ -807,50 +814,46 @@ function MediaCard({ item, onClick, playlists, onAddToPlaylist }: {
   return (
     <button
       onClick={onClick}
-      className="rounded-xl overflow-hidden bg-[#131920] border border-white/10 text-left relative"
+      style={{ borderRadius: tokens.radius.md, overflow: 'hidden', background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, textAlign: 'left', position: 'relative', cursor: 'pointer', width: '100%' }}
     >
-      {/* Thumbnail */}
-      <div className="aspect-video bg-[#1a2230] flex items-center justify-center relative">
+      <div style={{ aspectRatio: '16/9', background: tokens.colors.surface, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
         {item.type === 'video' ? (
-          <Film size={32} className="text-gray-500" />
+          <Film size={32} color={tokens.colors.text.muted} />
         ) : (
-          <Music size={32} className="text-gray-500" />
+          <Music size={32} color={tokens.colors.text.muted} />
         )}
         {item.duration && (
-          <div className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/70 text-sm text-white font-mono">
+          <div style={{ position: 'absolute', bottom: '8px', right: '8px', padding: '4px 8px', borderRadius: '4px', background: 'rgba(0,0,0,0.7)', fontSize: tokens.typography.sm, color: tokens.colors.text.primary, fontFamily: 'monospace' }}>
             {tg.formatDuration(item.duration)}
           </div>
         )}
       </div>
       
-      {/* Info */}
-      <div className="p-3">
-        <div className="text-sm font-medium text-white truncate mb-1">{item.fileName}</div>
-        <div className="text-xs text-gray-500">{tg.formatSize(item.size)}</div>
+      <div style={{ padding: tokens.spacing.md }}>
+        <div style={{ fontSize: tokens.typography.sm, fontWeight: 500, color: tokens.colors.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }}>{item.fileName}</div>
+        <div style={{ fontSize: tokens.typography.xs, color: tokens.colors.text.muted }}>{tg.formatSize(item.size)}</div>
       </div>
       
-      {/* Add to playlist button */}
       {playlists.length > 0 && (
         <button
           onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center"
+          style={{ position: 'absolute', top: '8px', right: '8px', width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}
         >
-          <Plus size={16} className="text-white" />
+          <Plus size={16} color={tokens.colors.text.primary} />
         </button>
       )}
       
-      {/* Playlist menu */}
       {showMenu && (
-        <div className="absolute top-12 right-2 z-20 w-48 bg-[#1a2230] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
-          <div className="p-2 border-b border-white/10">
-            <div className="text-xs text-gray-500 px-2">Add to playlist</div>
+        <div style={{ position: 'absolute', top: '48px', right: '8px', zIndex: 20, width: '192px', background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, borderRadius: tokens.radius.md, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
+          <div style={{ padding: '8px', borderBottom: `1px solid ${tokens.colors.border}` }}>
+            <div style={{ fontSize: tokens.typography.xs, color: tokens.colors.text.muted, padding: '0 8px' }}>Add to playlist</div>
           </div>
-          <div className="max-h-48 overflow-y-auto">
+          <div style={{ maxHeight: '192px', overflowY: 'auto' }}>
             {playlists.map(p => (
               <button
                 key={p.id}
                 onClick={(e) => { e.stopPropagation(); onAddToPlaylist(p.id, item.id); setShowMenu(false); }}
-                className="w-full px-3 py-3 text-left text-sm text-white hover:bg-white/5 truncate"
+                style={{ width: '100%', padding: '12px', textAlign: 'left', fontSize: tokens.typography.sm, color: tokens.colors.text.primary, background: 'none', border: 'none', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
               >
                 {p.name}
               </button>
@@ -921,14 +924,14 @@ function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack
 
   if (loading && downloadProgress) {
     return (
-      <div className="h-full flex items-center justify-center bg-black">
-        <div className="text-center">
-          <Loader2 size={48} className="animate-spin text-[#229ED9] mx-auto mb-4" />
-          <p className="text-base text-white mb-2">Downloading...</p>
-          <div className="w-64 h-2 rounded-full bg-white/10 overflow-hidden mx-auto mb-2">
-            <div className="h-full bg-[#229ED9]" style={{ width: `${progressPercent}%` }} />
+      <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
+        <div style={{ textAlign: 'center' }}>
+          <Loader2 size={48} className="animate-spin" style={{ color: tokens.colors.primary, margin: '0 auto 16px' }} />
+          <p style={{ fontSize: tokens.typography.base, color: tokens.colors.text.primary, marginBottom: '8px' }}>Downloading...</p>
+          <div style={{ width: '256px', height: '8px', borderRadius: '999px', background: 'rgba(255,255,255,0.1)', overflow: 'hidden', margin: '0 auto 8px' }}>
+            <div style={{ height: '100%', background: tokens.colors.primary, width: `${progressPercent}%` }} />
           </div>
-          <p className="text-sm text-gray-400">
+          <p style={{ fontSize: tokens.typography.sm, color: tokens.colors.text.secondary }}>
             {tg.formatSize(downloadProgress.loaded)} / {tg.formatSize(downloadProgress.total)}
           </p>
         </div>
@@ -937,70 +940,65 @@ function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack
   }
 
   return (
-    <div className="h-full flex flex-col bg-black">
-      {/* Media element */}
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#000' }}>
       {media.type === 'video' ? (
         <video
           ref={videoRef}
           src={media.fileName}
-          className="flex-1 w-full object-contain"
+          style={{ flex: 1, width: '100%', objectFit: 'contain' }}
           autoPlay={isPlaying}
           playsInline
         />
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center bg-[#0a0e14] p-6">
-          <div className="w-48 h-48 rounded-2xl bg-[#229ED9]/20 flex items-center justify-center mb-6">
-            <Music size={80} className="text-[#229ED9]" />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: tokens.colors.background, padding: tokens.spacing['2xl'] }}>
+          <div style={{ width: '192px', height: '192px', borderRadius: tokens.radius.lg, background: `${tokens.colors.primary}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: tokens.spacing['2xl'] }}>
+            <Music size={80} color={tokens.colors.primary} />
           </div>
-          <h3 className="text-xl font-bold text-white px-6 truncate max-w-sm mb-2 text-center">{media.fileName}</h3>
-          <p className="text-base text-gray-400">{media.chatTitle}</p>
+          <h3 style={{ fontSize: tokens.typography.xl, fontWeight: 700, color: tokens.colors.text.primary, padding: '0 24px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '400px', marginBottom: '8px', textAlign: 'center' }}>{media.fileName}</h3>
+          <p style={{ fontSize: tokens.typography.base, color: tokens.colors.text.secondary }}>{media.chatTitle}</p>
           <audio ref={audioRef} src={media.fileName} autoPlay={isPlaying} />
         </div>
       )}
 
-      {/* Controls */}
-      <div className="bg-black/90 p-4">
-        {/* Title */}
-        <div className="mb-4">
-          <h3 className="text-lg font-bold text-white truncate">{media.fileName}</h3>
-          <p className="text-sm text-gray-400">{media.chatTitle}</p>
+      <div style={{ background: 'rgba(0,0,0,0.9)', padding: tokens.spacing.lg }}>
+        <div style={{ marginBottom: tokens.spacing.lg }}>
+          <h3 style={{ fontSize: tokens.typography.lg, fontWeight: 700, color: tokens.colors.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{media.fileName}</h3>
+          <p style={{ fontSize: tokens.typography.sm, color: tokens.colors.text.secondary }}>{media.chatTitle}</p>
         </div>
 
-        {/* Progress */}
-        <div className="mb-4">
-          <div className="w-full h-2 bg-white/20 rounded-full cursor-pointer" onClick={handleSeek}>
-            <div className="h-full bg-[#229ED9] rounded-full" style={{ width: `${progressPercent}%` }} />
+        <div style={{ marginBottom: tokens.spacing.lg }}>
+          <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.2)', borderRadius: '999px', cursor: 'pointer' }} onClick={handleSeek}>
+            <div style={{ height: '100%', background: tokens.colors.primary, borderRadius: '999px', width: `${progressPercent}%` }} />
           </div>
-          <div className="flex justify-between mt-2 text-sm text-gray-400">
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: tokens.typography.sm, color: tokens.colors.text.secondary }}>
             <span>{tg.formatDuration(currentTime)}</span>
             <span>{tg.formatDuration(duration || media.duration || 0)}</span>
           </div>
         </div>
 
-        {/* Buttons */}
-        <div className="flex items-center justify-between">
-          <button onClick={onBack} className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center">
-            <ArrowLeft size={20} className="text-white" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: tokens.radius.md, background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
+            <ArrowLeft size={20} color={tokens.colors.text.primary} />
           </button>
           
-          <div className="flex items-center gap-4">
-            <button className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center">
-              <SkipBack size={20} className="text-white" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.lg }}>
+            <button style={{ width: '44px', height: '44px', borderRadius: tokens.radius.md, background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
+              <SkipBack size={20} color={tokens.colors.text.primary} />
             </button>
             <button
               onClick={onTogglePlay}
-              className="w-14 h-14 rounded-full bg-[#229ED9] flex items-center justify-center"
+              style={{ width: '56px', height: '56px', borderRadius: '50%', background: tokens.colors.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}
             >
-              {isPlaying ? <Pause size={28} className="text-white" /> : <Play size={28} className="text-white ml-1" />}
+              {isPlaying ? <Pause size={28} color={tokens.colors.text.primary} /> : <Play size={28} color={tokens.colors.text.primary} style={{ marginLeft: '4px' }} />}
             </button>
-            <button className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center">
-              <SkipForward size={20} className="text-white" />
+            <button style={{ width: '44px', height: '44px', borderRadius: tokens.radius.md, background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
+              <SkipForward size={20} color={tokens.colors.text.primary} />
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button onClick={() => setIsMuted(!isMuted)} className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center">
-              {isMuted ? <VolumeX size={20} className="text-white" /> : <Volume2 size={20} className="text-white" />}
+          <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.sm }}>
+            <button onClick={() => setIsMuted(!isMuted)} style={{ width: '44px', height: '44px', borderRadius: tokens.radius.md, background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
+              {isMuted ? <VolumeX size={20} color={tokens.colors.text.primary} /> : <Volume2 size={20} color={tokens.colors.text.primary} />}
             </button>
             <input
               type="range"
@@ -1008,7 +1006,7 @@ function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack
               max="100"
               value={isMuted ? 0 : volume}
               onChange={(e) => { setVolume(Number(e.target.value)); setIsMuted(false); }}
-              className="w-24"
+              style={{ width: '96px' }}
             />
           </div>
         </div>
@@ -1018,9 +1016,8 @@ function PlayerScreen({ media, isPlaying, progress, onTogglePlay, onSeek, onBack
 }
 
 // ==================== PLAYLISTS SCREEN ====================
-function PlaylistsScreen({ playlists, media, onToggleFavorite, onDelete, onCreate, onBack }: {
+function PlaylistsScreen({ playlists, onToggleFavorite, onDelete, onCreate, onBack }: {
   playlists: Playlist[];
-  media: TgMedia[];
   onToggleFavorite: (id: string) => void;
   onDelete: (id: string) => void;
   onCreate: (name: string) => void;
@@ -1030,29 +1027,29 @@ function PlaylistsScreen({ playlists, media, onToggleFavorite, onDelete, onCreat
   const [newName, setNewName] = useState('');
 
   return (
-    <div className="h-full flex flex-col">
-      <header className="p-4 flex items-center gap-3 flex-shrink-0 border-b border-white/10">
-        <button onClick={onBack} className="w-11 h-11 rounded-xl bg-[#131920] border border-white/10 flex items-center justify-center">
-          <ArrowLeft size={20} className="text-white" />
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <header style={{ padding: tokens.spacing.lg, display: 'flex', alignItems: 'center', gap: tokens.spacing.md, flexShrink: 0, borderBottom: `1px solid ${tokens.colors.border}` }}>
+        <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <ArrowLeft size={20} color={tokens.colors.text.primary} />
         </button>
-        <h2 className="text-lg font-bold text-white flex-1">Playlists</h2>
+        <h2 style={{ fontSize: tokens.typography.lg, fontWeight: 700, color: tokens.colors.text.primary, flex: 1 }}>Playlists</h2>
         <button
           onClick={() => setShowCreate(true)}
-          className="w-11 h-11 rounded-xl bg-[#229ED9] flex items-center justify-center"
+          style={{ width: '44px', height: '44px', borderRadius: tokens.radius.md, background: tokens.colors.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}
         >
-          <Plus size={20} className="text-white" />
+          <Plus size={20} color={tokens.colors.text.primary} />
         </button>
       </header>
 
       {showCreate && (
-        <div className="p-4 border-b border-white/10">
-          <div className="flex gap-2">
+        <div style={{ padding: tokens.spacing.lg, borderBottom: `1px solid ${tokens.colors.border}` }}>
+          <div style={{ display: 'flex', gap: tokens.spacing.sm }}>
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Playlist name..."
-              className="flex-1 px-4 py-3 rounded-xl bg-[#131920] border border-white/10 text-base text-white focus:border-[#229ED9] focus:outline-none"
+              style={{ flex: 1, padding: '12px 16px', borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, fontSize: tokens.typography.base, color: tokens.colors.text.primary, outline: 'none' }}
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && newName.trim()) {
@@ -1064,13 +1061,13 @@ function PlaylistsScreen({ playlists, media, onToggleFavorite, onDelete, onCreat
             />
             <button
               onClick={() => { if (newName.trim()) { onCreate(newName); setNewName(''); setShowCreate(false); } }}
-              className="px-4 py-3 rounded-xl bg-[#229ED9] text-white"
+              style={{ padding: '12px 16px', borderRadius: tokens.radius.md, background: tokens.colors.primary, color: tokens.colors.text.primary, border: 'none', cursor: 'pointer' }}
             >
               <Check size={20} />
             </button>
             <button
               onClick={() => { setShowCreate(false); setNewName(''); }}
-              className="px-4 py-3 rounded-xl bg-white/10 text-gray-400"
+              style={{ padding: '12px 16px', borderRadius: tokens.radius.md, background: 'rgba(255,255,255,0.1)', color: tokens.colors.text.secondary, border: 'none', cursor: 'pointer' }}
             >
               <X size={20} />
             </button>
@@ -1078,25 +1075,25 @@ function PlaylistsScreen({ playlists, media, onToggleFavorite, onDelete, onCreat
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div style={{ flex: 1, overflowY: 'auto', padding: tokens.spacing.lg }}>
         {playlists.length === 0 ? (
           <EmptyState icon={<List size={48} />} title="No playlists yet" subtitle="Create your first playlist" />
         ) : (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.md }}>
             {playlists.map(p => (
-              <div key={p.id} className="p-4 rounded-xl bg-[#131920] border border-white/10 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-[#229ED9]/20 flex items-center justify-center">
-                  <List size={24} className="text-[#229ED9]" />
+              <div key={p.id} style={{ padding: tokens.spacing.lg, borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, display: 'flex', alignItems: 'center', gap: tokens.spacing.lg }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: tokens.radius.md, background: `${tokens.colors.primary}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <List size={24} color={tokens.colors.primary} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-base font-medium text-white truncate">{p.name}</div>
-                  <div className="text-sm text-gray-400">{p.items.length} items • {p.createdAt}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: tokens.typography.base, fontWeight: 500, color: tokens.colors.text.primary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                  <div style={{ fontSize: tokens.typography.sm, color: tokens.colors.text.secondary }}>{p.items.length} items • {p.createdAt}</div>
                 </div>
-                <button onClick={() => onToggleFavorite(p.id)} className="w-11 h-11 flex items-center justify-center">
-                  <Heart size={20} className={p.isFavorite ? 'fill-[#FFD700] text-[#FFD700]' : 'text-gray-500'} />
+                <button onClick={() => onToggleFavorite(p.id)} style={{ width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}>
+                  <Heart size={20} style={{ color: p.isFavorite ? '#FFD700' : tokens.colors.text.muted, fill: p.isFavorite ? '#FFD700' : 'none' }} />
                 </button>
-                <button onClick={() => onDelete(p.id)} className="w-11 h-11 flex items-center justify-center">
-                  <Trash2 size={20} className="text-gray-500" />
+                <button onClick={() => onDelete(p.id)} style={{ width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}>
+                  <Trash2 size={20} color={tokens.colors.text.muted} />
                 </button>
               </div>
             ))}
@@ -1114,54 +1111,51 @@ function SettingsScreen({ user, onBack, onLogout }: {
   onLogout: () => void;
 }) {
   return (
-    <div className="h-full flex flex-col">
-      <header className="p-4 flex items-center gap-3 flex-shrink-0 border-b border-white/10">
-        <button onClick={onBack} className="w-11 h-11 rounded-xl bg-[#131920] border border-white/10 flex items-center justify-center">
-          <ArrowLeft size={20} className="text-white" />
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <header style={{ padding: tokens.spacing.lg, display: 'flex', alignItems: 'center', gap: tokens.spacing.md, flexShrink: 0, borderBottom: `1px solid ${tokens.colors.border}` }}>
+        <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <ArrowLeft size={20} color={tokens.colors.text.primary} />
         </button>
-        <h2 className="text-lg font-bold text-white">Settings</h2>
+        <h2 style={{ fontSize: tokens.typography.lg, fontWeight: 700, color: tokens.colors.text.primary }}>Settings</h2>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Account */}
-        <div className="p-4 rounded-xl bg-[#131920] border border-white/10">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-[#229ED9] flex items-center justify-center">
-              <User size={24} className="text-white" />
+      <div style={{ flex: 1, overflowY: 'auto', padding: tokens.spacing.lg, display: 'flex', flexDirection: 'column', gap: tokens.spacing.lg }}>
+        <div style={{ padding: tokens.spacing.lg, borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.lg }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: tokens.colors.primary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <User size={24} color={tokens.colors.text.primary} />
             </div>
             <div>
-              <div className="text-base font-medium text-white">{user?.firstName || 'User'}</div>
-              <div className="text-sm text-gray-400">{user?.username ? `@${user.username}` : `ID: ${user?.id}`}</div>
+              <div style={{ fontSize: tokens.typography.base, fontWeight: 500, color: tokens.colors.text.primary }}>{user?.firstName || 'User'}</div>
+              <div style={{ fontSize: tokens.typography.sm, color: tokens.colors.text.secondary }}>{user?.username ? `@${user.username}` : `ID: ${user?.id}`}</div>
             </div>
           </div>
         </div>
 
-        {/* Info */}
-        <div className="p-4 rounded-xl bg-[#131920] border border-white/10 space-y-3">
-          <h3 className="text-base font-semibold text-gray-400 uppercase">About</h3>
-          <div className="flex justify-between text-base">
-            <span className="text-gray-400">Version</span>
-            <span className="text-white">1.1.0</span>
+        <div style={{ padding: tokens.spacing.lg, borderRadius: tokens.radius.md, background: tokens.colors.surface, border: `1px solid ${tokens.colors.border}`, display: 'flex', flexDirection: 'column', gap: tokens.spacing.md }}>
+          <h3 style={{ fontSize: tokens.typography.base, fontWeight: 600, color: tokens.colors.text.secondary, textTransform: 'uppercase' }}>About</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: tokens.typography.base }}>
+            <span style={{ color: tokens.colors.text.secondary }}>Version</span>
+            <span style={{ color: tokens.colors.text.primary }}>1.1.0</span>
           </div>
-          <div className="flex justify-between text-base">
-            <span className="text-gray-400">Platform</span>
-            <span className="text-white">Telegram Mini App</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: tokens.typography.base }}>
+            <span style={{ color: tokens.colors.text.secondary }}>Platform</span>
+            <span style={{ color: tokens.colors.text.primary }}>Telegram Mini App</span>
           </div>
-          <div className="flex justify-between text-base">
-            <span className="text-gray-400">License</span>
-            <span className="text-white">GPL-3.0</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: tokens.typography.base }}>
+            <span style={{ color: tokens.colors.text.secondary }}>License</span>
+            <span style={{ color: tokens.colors.text.primary }}>GPL-3.0</span>
           </div>
         </div>
 
-        {/* Logout */}
         <button
           onClick={onLogout}
-          className="w-full py-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-base font-medium flex items-center justify-center gap-3 min-h-[44px]"
+          style={{ width: '100%', padding: '16px', borderRadius: tokens.radius.md, background: 'rgba(239, 68, 68, 0.1)', border: `1px solid ${tokens.colors.error}30`, color: tokens.colors.error, fontSize: tokens.typography.base, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', minHeight: '44px', cursor: 'pointer' }}
         >
           <LogOut size={20} /> Sign Out
         </button>
 
-        <p className="text-center text-sm text-gray-500 pb-4">
+        <p style={{ textAlign: 'center', fontSize: tokens.typography.sm, color: tokens.colors.text.muted, paddingBottom: tokens.spacing.lg }}>
           TeleTV Player © 2026
         </p>
       </div>
